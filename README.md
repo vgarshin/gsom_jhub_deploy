@@ -4,6 +4,10 @@ Manual for Zero to JupyterHub with Kubernetes Deploy
 ## Introduction
 https://github.com/jupyterhub/zero-to-jupyterhub-k8s
 
+## Cloud environment setup
+
+https://mcs.mail.ru/help/ru_RU/k8s-start/create-k8s
+
 ## Installation
 
 kubectl install
@@ -18,9 +22,22 @@ kubectl proxy
 kubectl get nodes
 ```
 
+## Monitoring
+
+
+
 ## Upgrade
 
 Docker images, authorization
+
+## Troubleshooting
+
+trouble with the default storage class
+```
+kubectl get storageclass
+kubectl get storageclass csi-ceph-ssd-dp1 -o yaml
+kubectl patch storageclass csi-ceph-ssd-dp1 -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+```
 
 ## More
 
