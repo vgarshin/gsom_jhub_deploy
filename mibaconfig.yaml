@@ -1,0 +1,171 @@
+proxy:
+  secretToken: "<SECRET_TOKEN>"
+  https:
+    enabled: true
+    hosts:
+      - jhas01.gsom.spbu.ru
+    letsencrypt:
+      contactEmail: vgarshin@vtb.education
+
+scheduling:
+# ==========================================
+# This priority mechanism allows us to add dummy users or user-placeholders 
+# with low priority that can take up resources until a real user with 
+# (higher priority) requires it. 
+#  podPriority:
+#    enabled: true
+#    globalDefault: true
+#    defaultPriority: 10
+#    userPlaceholderPriority: 0
+#  userPlaceholder:
+#    enabled: true
+#    replicas: 2
+# ==========================================
+# The user scheduler’s only task is to schedule new user pods to the most utilized node.
+  userScheduler:
+    enabled: true
+# ==========================================
+# If we add a taint to all the nodes in the node pool, and a toleration on the user pods 
+# to tolerate being scheduled on a tainted node, we have practically dedicated the node pool 
+# to be used only by user pods. 
+#  scheduling:
+#    userPods:
+#      nodeAffinity:
+        # matchNodePurpose valid options:
+        # - ignore
+        # - prefer (the default)
+        # - require
+#        matchNodePurpose: require
+# ==========================================
+
+singleuser:
+# ==========================================
+# git clone repository at start for user
+  lifecycleHooks:
+    postStart:
+      exec:
+        command:
+          - "sh"
+          - "-c"
+          - >
+            cd /tmp;
+            git clone https://github.com/vgarshin/gsom_jhub_manual;
+            mkdir -p /home/jovyan/__MANUAL;
+            rm -r /home/jovyan/__MANUAL/*;
+            mv -f /tmp/gsom_jhub_manual/* /home/jovyan/__MANUAL
+# ==========================================
+# local DBs creds
+  extraEnv:
+    CLICKHOUSE_USER: "logsreader"
+    CLICKHOUSE_PASSWORD: "<CLICKHOUSE_PASSWORD>"
+    POSTGRESQL_USER: "reader"
+    POSTGRESQL_PASSWORD: "<POSTGRESQL_PASSWORD>"
+# ==========================================
+# JupyterLab turn on-off 
+#  defaultUrl: "/lab"
+# ==========================================
+# timeout to user's server start
+#  startTimeout: 600
+# ==========================================
+  image:
+     name: vgarshin/mibadsai
+     tag: 20210603v3
+  profileList:
+    - display_name: "Data Science environment"
+      description: "All libraries for MiBA courses and labs."
+      default: true
+    - display_name: "Spark environment"
+      description: "Jupyter and PySpark image with S3 access."
+      kubespawner_override:
+        image: vgarshin/mibapysparks3:20211002v1
+    - display_name: "R environment"
+      description: "Popular packages from the R ecosystem."
+      kubespawner_override:
+        image: jupyter/r-notebook:a0a544e6dc6e
+    - display_name: "Minimal Python environment"
+      description: "Pure Python and some libraries."
+      kubespawner_override:
+        image: jupyter/minimal-notebook:a0a544e6dc6e
+# ==========================================
+# Hadoop client image
+#    - display_name: "Hadoop environment"
+#      description: "HDFS client for Hadoop cluster access."
+#      kubespawner_override:
+#        image: vgarshin/mibahadoop:20211503v2
+# ==========================================
+# 5 users per node config
+  cpu:
+    limit: 3
+    guarantee: 3
+  memory:
+    limit: 10G
+    guarantee: 10G
+# ==========================================
+# 3 users per node config
+#  cpu:
+#    limit: 5
+#    guarantee: 5
+#  memory:
+#    limit: 18G
+#    guarantee: 18G
+# ==========================================
+  storage:
+    capacity: 12Gi
+    extraVolumes:
+      - name: jupyterhub-shared
+        persistentVolumeClaim:
+          claimName: jupyterhub-shared-pvc
+    extraVolumeMounts:
+      - name: jupyterhub-shared
+        mountPath: /home/jovyan/__SHARED
+
+cull:
+  enabled: true
+  timeout: 3600
+  every: 300
+
+hub:
+  config:
+    Authenticator:
+      admin_users:
+        - vgarshin
+    JupyterHub:
+      admin_access: true
+      authenticator_class: azuread
+# ==========================================
+# not working as expected keep for future
+  extraFiles:
+    miba_creds:
+      mountPath: /etc/jupyterhub/mibacreds.json
+# ==========================================
+  extraConfig:
+    mibaConfig: |
+      import re
+      import json
+      from oauthenticator.azuread import AzureAdOAuthenticator
+
+      class MibaAzureAdOAuthenticator(AzureAdOAuthenticator):
+        def normalize_username(self, username):
+          username = username.split('@')[0]
+          username = username.lower()
+          username = re.sub('[^0-9a-zA-Z]+', '', username)
+          username = self.username_map.get(username, username)
+          return username
+      
+      # for future release of JupyterHub for Kubernetes
+      #with open('/etc/jupyterhub/mibacreds.json') as file:
+      #  CREDS = json.load(file)
+      
+      CREDS = {
+        "tenant_id": "<TENANT_ID>",
+        "client_id": "<CLIENT_ID>",
+        "client_secret": "<CLIENT_SECRET>"
+      }
+
+      c.JupyterHub.authenticator_class = MibaAzureAdOAuthenticator
+
+      c.MibaAzureAdOAuthenticator.tenant_id = CREDS['tenant_id']
+      c.MibaAzureAdOAuthenticator.oauth_callback_url = 'https://jhas01.gsom.spbu.ru/hub/oauth_callback'
+      c.MibaAzureAdOAuthenticator.client_id = CREDS['client_id']
+      c.MibaAzureAdOAuthenticator.client_secret = CREDS['client_secret']
+      c.MibaAzureAdOAuthenticator.username_claim = 'unique_name'
