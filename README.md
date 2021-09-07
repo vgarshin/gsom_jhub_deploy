@@ -95,25 +95,26 @@ kubectl proxy
 ```
 
 Other commands:
-```
-kubectl get pod --namespace jhub
-kubectl get pod --all-namespaces
-kubectl get service --namespace jhub
-kubectl get events --all-namespaces  --sort-by='.metadata.creationTimestamp'
-kubectl get volumeattachment
-kubectl cluster-info
-kubectl describe
-kubectl api-resources
-kubectl describe nodes
-kubectl --namespace=jhub get svc proxy-public
-kubectl -n jhubsir describe svc hub-857d5c566b-xf8f8
-kubectl -n jhubsir describe svc hub
-kubectl -n jhubsir describe svc proxy-public
-kubectl -n jhubsir describe pvc hub-db-dir
-kubectl --namespace=jhub logs hub-797b7b767-dmqnq
-kubectl logs csi-cinder-nodeplugin-b4l48 -n kube-system -c node-driver-registrar --previous # if many dockers in a pod
-kubectl --namespace=jhub exec -it jupyter-vgarshin /bin/bash
-```
+
+| Command | Description |
+|:---:|:----|
+| `kubectl get pod --namespace <nmespace>` | Get list of all podes in `<namespace>` (in our case `jhub` namespace) |
+| `kubectl get pod --all-namespaces` | |
+| `kubectl get service --namespace jhub` | |
+| `kubectl get events --all-namespaces  --sort-by='.metadata.creationTimestamp'` | |
+| `kubectl get volumeattachment` | |
+| `kubectl cluster-info` | |
+| `kubectl describe` | |
+| `kubectl api-resources` | |
+| `kubectl describe nodes` | |
+| `kubectl --namespace=jhub get svc proxy-public` | |
+| `kubectl -n jhubsir describe svc hub-857d5c566b-xf8f8` | |
+| `kubectl -n jhubsir describe svc hub` | |
+| `kubectl -n jhubsir describe svc proxy-public` | |
+| `kubectl -n jhubsir describe pvc hub-db-dir` | |
+| `kubectl --namespace=jhub logs hub-797b7b767-dmqnq` | |
+| `kubectl logs csi-cinder-nodeplugin-b4l48 -n kube-system -c node-driver-registrar --previous # if many dockers in a pod` | |
+| `kubectl --namespace=jhub exec -it jupyter-vgarshin /bin/bash` | |
 
 ## Upgrade
 
