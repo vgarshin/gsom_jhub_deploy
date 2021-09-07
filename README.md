@@ -98,22 +98,18 @@ Other commands:
 
 | Command | Description |
 |:---|:---|
-| `kubectl get pod --namespace jhub` | Get list of all podes in `jhub` namespace |
+| `kubectl get pod -n jhub` | Get list of all podes in `jhub` namespace |
 | `kubectl get pod --all-namespaces` |  Get list of all podes in all namespaces |
 | `kubectl get service --namespace jhub` | Get list of all services running in all namespaces. In our cases these services are `hub`, `proxy-api`, `proxy-http` and `proxy-public` |
 | `kubectl get events --all-namespaces  --sort-by='.metadata.creationTimestamp'` | Display logs from all namespaces sorted bt time |
-| `kubectl get volumeattachment` | |
-| `kubectl cluster-info` | |
-| `kubectl describe` | |
-| `kubectl api-resources` | |
-| `kubectl describe nodes` | |
-| `kubectl --namespace=jhub get svc proxy-public` | |
-| `kubectl -n jhubsir describe svc hub-857d5c566b-xf8f8` | |
-| `kubectl -n jhubsir describe svc hub` | |
-| `kubectl -n jhubsir describe svc proxy-public` | |
+| `kubectl get volumeattachment` | List all [PV](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) attached |
+| `kubectl cluster-info` | Get full cluster info including `Kubernetes control plane` running address |
+| `kubectl get nodes` | List all nodes and their status |
+| `kubectl describe nodes` | Detailed description of all nodes in the cluster |
+| `kubectl --namespace=jhub get svc <service_name>` | Service `<service_name>` info (for `hub`, `proxy-api`, `proxy-http` and `proxy-public` services) |
 | `kubectl -n jhubsir describe pvc hub-db-dir` | |
 | `kubectl --namespace=jhub logs hub-797b7b767-dmqnq` | |
-| `kubectl logs csi-cinder-nodeplugin-b4l48 -n kube-system -c node-driver-registrar --previous # if many dockers in a pod` | |
+| `kubectl logs csi-cinder-nodeplugin-b4l48 -n kube-system -c node-driver-registrar --previous` | |
 | `kubectl --namespace=jhub exec -it jupyter-vgarshin /bin/bash` | |
 
 ## Upgrade
