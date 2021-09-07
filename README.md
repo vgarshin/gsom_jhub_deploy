@@ -2,7 +2,10 @@
 Manual for Zero to JupyterHub with Kubernetes Deploy
 
 ## Introduction
-https://github.com/jupyterhub/zero-to-jupyterhub-k8s
+
+This manual will get you through installation process of [JupyterHub for Kubernetes](https://github.com/jupyterhub/zero-to-jupyterhub-k8s) on a cloud using [Kubernetes](https://kubernetes.io) with [Helm](https://helm.sh) and  JupyterHub customization for use in [MiBA program](https://gsom.spbu.ru/en/programmes/graduate/miba/) technology oriented courses.
+
+You also may find [The Zero to JupyterHub with Kubernetes guide](https://zero-to-jupyterhub.readthedocs.io) for detais and it  is complemented well by the documentation for [JupyterHub](https://jupyterhub.readthedocs.io).
 
 ## Cloud environment setup
 
