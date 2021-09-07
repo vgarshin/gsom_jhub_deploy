@@ -51,10 +51,43 @@ It is recommended to follow [the documentation](https://zero-to-jupyterhub.readt
 ```
 curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
 ```
-Check if `helm` is installed:
+Check if `Helm` is installed:
 ```
 helm list
 ```
+
+### STEP 3. Install JupyterHub
+
+With a cluster available, `kubectl` and  `Helm` installed, you can install JupyterHub with [the following commands](https://zero-to-jupyterhub.readthedocs.io/en/latest/jupyterhub/installation.html) below.
+
+Generate secret for JyputerHub config file:
+```
+openssl rand -hex 32
+```
+and create config file with e.g. `nano mibaconfig.yaml' command. Configuration file shoul contain:
+```
+proxy:
+  secretToken: "<output of 'openssl rand -hex 32' command>"
+```
+
+
+$ helm repo add jupyterhub https://jupyterhub.github.io/helm-chart/
+$ helm repo update
+$ nano jhubhelminstall.sh
+RELEASE=jhub
+NAMESPACE=jhub
+
+helm upgrade --cleanup-on-fail \
+  --install $RELEASE jupyterhub/jupyterhub \
+  --namespace $NAMESPACE \
+  --create-namespace \
+  --version=0.9.0 \
+  --values config.yaml
+$ chmod +x jhubhelminstall.sh
+$ ./jhubhelminstall.sh
+$ helm list -n jhub
+NAME    NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
+jhub    jhub            105             2021-08-18 09:49:31.82288031 +0000 UTC  deployed        jupyterhub-0.11.1       1.3.0
 
 ## Monitoring
 
