@@ -68,7 +68,7 @@ In order to start JupyterHub in a configuration for GSOM students you should do 
 
 With a cluster available, `kubectl` and  `Helm` installed, you can install JupyterHub with [the following commands](https://zero-to-jupyterhub.readthedocs.io/en/latest/jupyterhub/installation.html) below. The process is based on the manual recomendations but with some additions.
 
-1. Clone this repository `git clone https://github.com/vgarshin/gsom_jhub_deploy` to the folder with `<filename>.yaml` file.
+#### 1. Clone this repository `git clone https://github.com/vgarshin/gsom_jhub_deploy` to the folder with `<filename>.yaml` file.
 2. Create file e.g. with `nano mibacreds.txt` command.
 3. Put all secrets to `mibacreds.txt` file in the following way:
 ```
@@ -79,10 +79,10 @@ TENANT_ID <tenant_id>
 CLIENT_ID <client_id>
 CLIENT_SECRET <client_secret>
 ```
-    where:
-    -  `<secret_token>` can be generated with `openssl rand -hex 32` command
-    -  `<click_password>` and `<postgresql_password>` are passwords for databases (not necessary for this step, can be omitted)
-    -  `<tenant_id>`, `<client_id>`, `<client_secret>` are credentials for Azure AD authentification
+where:
+-  `<secret_token>` can be generated with `openssl rand -hex 32` command
+-  `<click_password>` and `<postgresql_password>` are passwords for databases (not necessary for this step, can be omitted)
+-  `<tenant_id>`, `<client_id>`, `<client_secret>` are credentials for Azure AD authentification
 4. Run `installjhub.sh` script to start installation process.
 5. Run `kubectl -n jhubsir describe svc proxy-public` to get public IP address and register that address for `jhas01.gsom.spbu.ru` domain name.
 6. After some time go to login JupyterHub page https://jhas01.gsom.spbu.ru to start work.
