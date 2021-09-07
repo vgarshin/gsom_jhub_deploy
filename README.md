@@ -33,11 +33,27 @@ sudo apt-get update && sudo apt-get install -y kubectl
 ```
 After install process finishes you will need `<filename>.yaml` uploaded to the host with `kubectl` client:
 ```
-export KUBECONFIG=~/filename.yaml
+export KUBECONFIG=~/<filename>.yaml
 ```
 After that you will get an access to the cluster:
 ```
 kubectl get nodes
+```
+Set the correct permissions for `<filename>.yaml`:
+```
+chmod g-r arkh-kjh-01_kubeconfig.yaml
+chmod o-r arkh-kjh-01_kubeconfig.yaml
+```
+
+### STEP 2. Install Helm
+
+It is recommended to follow [the documentation](https://zero-to-jupyterhub.readthedocs.io/en/latest/kubernetes/setup-helm.html):
+```
+curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+```
+Check if `helm` is installed:
+```
+helm list
 ```
 
 ## Monitoring
