@@ -79,10 +79,10 @@ TENANT_ID <tenant_id>
 CLIENT_ID <client_id>
 CLIENT_SECRET <client_secret>
 ```
-where:
--  <secret_token> can be generated with `openssl rand -hex 32` command
--  <click_password> and <postgresql_password> are passwords for databases (not necessary for this step, can be omitted)
--  <tenant_id>, <client_id>, <client_secret> are credentials for Azure AD authentification
+    where:
+    -  `<secret_token>` can be generated with `openssl rand -hex 32` command
+    -  `<click_password>` and `<postgresql_password>` are passwords for databases (not necessary for this step, can be omitted)
+    -  `<tenant_id>`, `<client_id>`, `<client_secret>` are credentials for Azure AD authentification
 4. Run `installjhub.sh` script to start installation process.
 5. Run `kubectl -n jhubsir describe svc proxy-public` to get public IP address and register that address for `jhas01.gsom.spbu.ru` domain name.
 6. After some time go to login JupyterHub page https://jhas01.gsom.spbu.ru to start work.
