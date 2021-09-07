@@ -56,13 +56,21 @@ Check if `Helm` is installed:
 helm list
 ```
 
-### STEP 3. Install JupyterHub
+### STEP 3. Some prerequsites
+
+In order to start JupyterHub in a configuration for GSOM students you should do it first:
+1. Ensure the OAuth integration with GSOM Azure AD is possible and JupyterHub application is registred in GSOM Azuse AD. As the result, you should get `<tenant_id>`,
+ `<client_id>` and `<client_secret>` from AD administrator for further steps.
+2. Domaim name e.g. `jhas01.gsom.spbu.ru` is available to register.
+ 
+
+### STEP 4. Install JupyterHub
 
 With a cluster available, `kubectl` and  `Helm` installed, you can install JupyterHub with [the following commands](https://zero-to-jupyterhub.readthedocs.io/en/latest/jupyterhub/installation.html) below. The process is based on the manual recomendations but with some additions.
 
 1. Clone this repository `git clone https://github.com/vgarshin/gsom_jhub_deploy` to the folder with `<filename>.yaml` file.
-2. Create file e.g. with `nano mibaconfig.yaml` command.
-3. Put all secrets to `mibaconfig.yaml` file in the following way:
+2. Create file e.g. with `nano mibacreds.txt` command.
+3. Put all secrets to `mibacreds.txt` file in the following way:
 ```
 SECRET_TOKEN <secret_token>
 CLICKHOUSE_PASSWORD <click_password>
@@ -75,29 +83,37 @@ where:
 -  <secret_token> can be generated with `openssl rand -hex 32` command
 -  <click_password> and <postgresql_password> are passwords for databases (not necessary for this step, can be omitted)
 -  <tenant_id>, <client_id>, <client_secret> are credentials for Azure AD authentification
-4. Next
-
-$ helm repo add jupyterhub https://jupyterhub.github.io/helm-chart/
-$ helm repo update
-$ nano jhubhelminstall.sh
-RELEASE=jhub
-NAMESPACE=jhub
-
-helm upgrade --cleanup-on-fail \
-  --install $RELEASE jupyterhub/jupyterhub \
-  --namespace $NAMESPACE \
-  --create-namespace \
-  --version=0.9.0 \
-  --values config.yaml
-$ chmod +x jhubhelminstall.sh
-$ ./jhubhelminstall.sh
-$ helm list -n jhub
-NAME    NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
-jhub    jhub            105             2021-08-18 09:49:31.82288031 +0000 UTC  deployed        jupyterhub-0.11.1       1.3.0
+4. Run `installjhub.sh` script to start installation process.
+5. Run `kubectl -n jhubsir describe svc proxy-public` to get public IP address and register that address for `jhas01.gsom.spbu.ru` domain name.
+6. After some time go to login JupyterHub page https://jhas01.gsom.spbu.ru to start work.
 
 ## Monitoring
 
+MCS Kubernetes dashboard:
+```
+kubectl proxy
+```
 
+Other commands:
+```
+kubectl get pod --namespace jhub
+kubectl get pod --all-namespaces
+kubectl get service --namespace jhub
+kubectl get events --all-namespaces  --sort-by='.metadata.creationTimestamp'
+kubectl get volumeattachment
+kubectl cluster-info
+kubectl describe
+kubectl api-resources
+kubectl describe nodes
+kubectl --namespace=jhub get svc proxy-public
+kubectl -n jhubsir describe svc hub-857d5c566b-xf8f8
+kubectl -n jhubsir describe svc hub
+kubectl -n jhubsir describe svc proxy-public
+kubectl -n jhubsir describe pvc hub-db-dir
+kubectl --namespace=jhub logs hub-797b7b767-dmqnq
+kubectl logs csi-cinder-nodeplugin-b4l48 -n kube-system -c node-driver-registrar --previous # if many dockers in a pod
+kubectl --namespace=jhub exec -it jupyter-vgarshin /bin/bash
+```
 
 ## Upgrade
 
