@@ -89,12 +89,12 @@ where:
 
 ## Monitoring
 
-MCS Kubernetes dashboard:
+To get access to MCS Kubernetes dashboard follow the instructions from [MCS manual](https://mcs.mail.ru/help/ru_RU/k8s-start/k8s-dashboard) and run the command:
 ```
 kubectl proxy
 ```
 
-Other commands:
+You also may what to monitor health or debug the claster with the list of ommands in the table below. They might be useful to discover basic troubles with the JupyterHub and the Kubernetes cluster:
 
 | Command | Description |
 |:---|:---|
@@ -106,11 +106,11 @@ Other commands:
 | `kubectl cluster-info` | Get full cluster info including `Kubernetes control plane` running address |
 | `kubectl get nodes` | List all nodes and their status |
 | `kubectl describe nodes` | Detailed description of all nodes in the cluster |
-| `kubectl --namespace=jhub get svc <service_name>` | Service `<service_name>` info (for `hub`, `proxy-api`, `proxy-http` and `proxy-public` services) |
-| `kubectl -n jhubsir describe pvc hub-db-dir` | |
-| `kubectl --namespace=jhub logs hub-797b7b767-dmqnq` | |
-| `kubectl logs csi-cinder-nodeplugin-b4l48 -n kube-system -c node-driver-registrar --previous` | |
-| `kubectl --namespace=jhub exec -it jupyter-vgarshin /bin/bash` | |
+| `kubectl -n jhub get svc <service_name>` | Service `<service_name>` info (for `hub`, `proxy-api`, `proxy-http` and `proxy-public` services) |
+| `kubectl -n jhub describe pvc <pvc_name>` | Describe selected [PVC](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) with name `<pvc_name>` |
+| `kubectl -n jhub logs <pod_name>` | List logs from pod named `<pod_name>`. Pod must be running to access to its logs |
+| `kubectl logs <pod_name> -n <namespace> -c <container_name> --previous` | List logs from pod named `<pod_name>` if many dockers in a pod |
+| `kubectl -n jhub exec -it <pod_name> /bin/bash` | Get access to shell /bin/bash of the running pod (container) `<pod_name>` |
 
 ## Upgrade
 
