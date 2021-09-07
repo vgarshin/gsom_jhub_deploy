@@ -17,17 +17,26 @@ Recommended parameters of a cluster are as follows:
 
 Note that for a node group there should be autoscaling enable with node number up to 100 (10 recommended).
 
+There will be a configuration file `<filename>.yaml` available after the cluster is created. You will need this file in order to get access to the cluster.
+
 ## Installation
 
+### STEP 1. Install kubectl
+
+You may use the manual that offers following steps:
 kubectl install
 ```
 sudo apt-get update && sudo apt-get install -y apt-transport-https
 curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
 sudo bash -c 'echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" > /etc/apt/sources.list.d/kubernetes.list'
 sudo apt-get update && sudo apt-get install -y kubectl
-cat filename.yaml
+```
+After install process finishes you will need `<filename>.yaml` uploaded to the host with `kubectl` client:
+```
 export KUBECONFIG=~/filename.yaml
-kubectl proxy
+```
+After that you will get an access to the cluster:
+```
 kubectl get nodes
 ```
 
