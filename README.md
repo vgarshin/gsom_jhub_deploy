@@ -139,4 +139,4 @@ kubectl label nodes miba-kjh-01-master-0 topology.cinder.csi.openstack.org/zone=
 
 ## More
 
-https://github.com/vgarshin/gsom_jhub_manual
+User's manual can be found [here](https://github.com/vgarshin/gsom_jhub_manual)
