@@ -97,11 +97,11 @@ kubectl proxy
 Other commands:
 
 | Command | Description |
-|:---:|:----|
-| `kubectl get pod --namespace <nmespace>` | Get list of all podes in `<namespace>` (in our case `jhub` namespace) |
-| `kubectl get pod --all-namespaces` | |
-| `kubectl get service --namespace jhub` | |
-| `kubectl get events --all-namespaces  --sort-by='.metadata.creationTimestamp'` | |
+|:---|:---|
+| `kubectl get pod --namespace jhub` | Get list of all podes in `jhub` namespace |
+| `kubectl get pod --all-namespaces` |  Get list of all podes in all namespaces |
+| `kubectl get service --namespace jhub` | Get list of all services running in all namespaces. In our cases these services are `hub`, `proxy-api`, `proxy-http` and `proxy-public` |
+| `kubectl get events --all-namespaces  --sort-by='.metadata.creationTimestamp'` | Display logs from all namespaces sorted bt time |
 | `kubectl get volumeattachment` | |
 | `kubectl cluster-info` | |
 | `kubectl describe` | |
@@ -122,11 +122,23 @@ Docker images, authorization
 
 ## Troubleshooting
 
-trouble with the default storage class
+Here known troubleshooyig cases are listed that occured during JupyterHub usage in MCS Kubernetes.
+
+#### Case 1. No default storage class
 ```
 kubectl get storageclass
 kubectl get storageclass csi-ceph-ssd-dp1 -o yaml
 kubectl patch storageclass csi-ceph-ssd-dp1 -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+```
+
+#### Case 2. Topology mismatch
+```
+kubectl get nodes --show-labels
+NAME                     STATUS   ROLES    AGE     VERSION   LABELS
+miba-kjh-01-group-01-0   Ready    <none>   6d15h   v1.17.8   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/instance-type=59f7faf3-d817-4cb8-ae69-8b4b92565f94,beta.kubernetes.io/os=linux,failure-domain.beta.kubernetes.io/zone=DP1,kubernetes.io/arch=amd64,kubernetes.io/hostname=miba-kjh-01-group-01-0,kubernetes.io/os=linux,mcs.mail.ru/mcs-nodepool=group-01,node.kubernetes.io/instance-type=59f7faf3-d817-4cb8-ae69-8b4b92565f94,topology.cinder.csi.openstack.org/zone=MS1,topology.kubernetes.io/zone=DP1
+miba-kjh-01-master-0     Ready    master   278d    v1.17.8   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/instance-type=d659fa16-c7fb-42cf-8a5e-9bcbe80a7538,beta.kubernetes.io/os=linux,failure-domain.beta.kubernetes.io/zone=MS1,kubernetes.io/arch=amd64,kubernetes.io/hostname=miba-kjh-01-master-0,kubernetes.io/os=linux,node-role.kubernetes.io/master=,node.kubernetes.io/instance-type=d659fa16-c7fb-42cf-8a5e-9bcbe80a7538,role.node.kubernetes.io/master=,topology.cinder.csi.openstack.org/zone=MS1,topology.kubernetes.io/zone=MS1
+kubectl label nodes miba-kjh-01-master-0 failure-domain.beta.kubernetes.io/zone=DP1 --overwrite=true
+kubectl label nodes miba-kjh-01-master-0 topology.cinder.csi.openstack.org/zone=DP1 --overwrite=true
 ```
 
 ## More
