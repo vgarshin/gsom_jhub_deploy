@@ -3,13 +3,19 @@ Manual for Zero to JupyterHub with Kubernetes Deploy
 
 ## Introduction
 
-This manual will get you through installation process of [JupyterHub for Kubernetes](https://github.com/jupyterhub/zero-to-jupyterhub-k8s) on a cloud using [Kubernetes](https://kubernetes.io) with [Helm](https://helm.sh) and  JupyterHub customization for use in [MiBA program](https://gsom.spbu.ru/en/programmes/graduate/miba/) technology oriented courses.
+This manual will get you through installation process of [JupyterHub for Kubernetes](https://github.com/jupyterhub/zero-to-jupyterhub-k8s/) on a cloud using [Kubernetes](https://kubernetes.io/) with [Helm](https://helm.sh/) and  JupyterHub customization for use in [MiBA program](https://gsom.spbu.ru/en/programmes/graduate/miba/) technology oriented courses.
 
-You also may find [The Zero to JupyterHub with Kubernetes guide](https://zero-to-jupyterhub.readthedocs.io) for detais and it  is complemented well by the documentation for [JupyterHub](https://jupyterhub.readthedocs.io).
+You also may find [The Zero to JupyterHub with Kubernetes guide](https://zero-to-jupyterhub.readthedocs.io/) for detais and it  is complemented well by the documentation for [JupyterHub](https://jupyterhub.readthedocs.io/).
 
 ## Cloud environment setup
 
-https://mcs.mail.ru/help/ru_RU/k8s-start/create-k8s
+Kubernetes cluster must be created as a first step to deploy JupyterHub. The process how to create cluster at [MCS](https://mcs.mail.ru/) is decribed in [MCS Kubernetes manual](https://mcs.mail.ru/help/ru_RU/k8s-start/create-k8s/).
+
+Recommended parameters of a cluster are as follows:
+- master node: 2 vCPU / 4 GB RAM / 32 GB disk space (SSD type recommended)
+- node group: 16 vCPU / 64 GB RAM / 64 GB disk space (SSD type recommended)
+
+Note that for a node group there should be autoscaling enable with node number up to 100 (10 recommended).
 
 ## Installation
 
