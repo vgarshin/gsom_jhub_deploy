@@ -68,7 +68,7 @@ In order to start JupyterHub in a configuration for GSOM students you should do 
 
 With a cluster available, `kubectl` and  `Helm` installed, you can install JupyterHub with [the following commands](https://zero-to-jupyterhub.readthedocs.io/en/latest/jupyterhub/installation.html) below. The process is based on the manual recomendations but with some additions.
 
-#### 1. Clone this repository `git clone https://github.com/vgarshin/gsom_jhub_deploy` to the folder with `<filename>.yaml` file.
+1. Clone this repository `git clone https://github.com/vgarshin/gsom_jhub_deploy` to the folder with `<filename>.yaml` file.
 2. Create file e.g. with `nano mibacreds.txt` command.
 3. Put all secrets to `mibacreds.txt` file in the following way:
 ```
