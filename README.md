@@ -58,18 +58,24 @@ helm list
 
 ### STEP 3. Install JupyterHub
 
-With a cluster available, `kubectl` and  `Helm` installed, you can install JupyterHub with [the following commands](https://zero-to-jupyterhub.readthedocs.io/en/latest/jupyterhub/installation.html) below.
+With a cluster available, `kubectl` and  `Helm` installed, you can install JupyterHub with [the following commands](https://zero-to-jupyterhub.readthedocs.io/en/latest/jupyterhub/installation.html) below. The process is based on the manual recomendations but with some additions.
 
-Generate secret for JyputerHub config file:
+1. Clone this repository `git clone https://github.com/vgarshin/gsom_jhub_deploy` to the folder with `<filename>.yaml` file.
+2. Create file e.g. with `nano mibaconfig.yaml` command.
+3. Put all secrets to `mibaconfig.yaml` file in the following way:
 ```
-openssl rand -hex 32
+SECRET_TOKEN <secret_token>
+CLICKHOUSE_PASSWORD <click_password>
+POSTGRESQL_PASSWORD <postgresql_password>
+TENANT_ID <tenant_id>
+CLIENT_ID <client_id>
+CLIENT_SECRET <client_secret>
 ```
-and create config file with e.g. `nano mibaconfig.yaml' command. Configuration file shoul contain:
-```
-proxy:
-  secretToken: "<output of 'openssl rand -hex 32' command>"
-```
-
+where:
+-  <secret_token> can be generated with `openssl rand -hex 32` command
+-  <click_password> and <postgresql_password> are passwords for databases (not necessary for this step, can be omitted)
+-  <tenant_id>, <client_id>, <client_secret> are credentials for Azure AD authentification
+4. Next
 
 $ helm repo add jupyterhub https://jupyterhub.github.io/helm-chart/
 $ helm repo update
