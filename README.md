@@ -116,8 +116,7 @@ Full list of the possible `kubectl` commands can be found [HERE](https://kuberne
 
 ## Customization
 
-JupyterHub allows to customize user environment which is the set of software packages, environment variables, and various files that are present when the user logs in. Overall manual for customization options can be found [HERE}(https://zero-to-jupyterhub.readthedocs.io/en/latest/jupyterhub/customizing/user-environment.html
-Docker images, authorization).
+JupyterHub allows to customize user environment which is the set of software packages, environment variables, and various files that are present when the user logs in. Overall manual for customization options can be found [HERE}(https://zero-to-jupyterhub.readthedocs.io/en/latest/jupyterhub/customizing/user-environment.html).
 
 Current installation already offers a few environments:
 - Data Science environment
