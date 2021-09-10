@@ -112,11 +112,20 @@ You also may what to monitor health or debug the claster with the list of ommand
 | `kubectl logs <pod_name> -n jhub -c <container_name> --previous` | List logs from pod named `<pod_name>` in `jhub` namespace if many docker containers are in a pod, where `<container_name>` stands for a container to find. Note the key `--previous` for the logs of a previous container launch |
 | `kubectl -n jhub exec -it <pod_name> /bin/bash` | Get access to shell `/bin/bash` of the running pod (container) `<pod_name>` in `jhub` namespace |
 
-Full list of the possible `kubectl` commands can be found [here](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands).
+Full list of the possible `kubectl` commands can be found [HERE](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands).
 
-## Upgrade
+## Customization
 
-Docker images, authorization
+JupyterHub allows to customize user environment which is the set of software packages, environment variables, and various files that are present when the user logs in. Overall manual for customization options can be found [HERE}(https://zero-to-jupyterhub.readthedocs.io/en/latest/jupyterhub/customizing/user-environment.html
+Docker images, authorization).
+
+Current installation already offers a few environments:
+- Data Science environment
+- Spark environment
+- R environment
+- Minimal Python environment
+
+All of the images for environments are taken or inherited from [THIS RESOURCE](https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html).
 
 ## Troubleshooting
 
