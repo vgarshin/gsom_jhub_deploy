@@ -109,7 +109,7 @@ You also may what to monitor health or debug the claster with the list of ommand
 | `kubectl -n jhub get svc <service_name>` | Service `<service_name>` info (for `hub`, `proxy-api`, `proxy-http` and `proxy-public` services) in `jhub` namespace |
 | `kubectl -n jhub describe pvc <pvc_name>` | Describe selected [PVC](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) with name `<pvc_name>` in `jhub` namespace |
 | `kubectl -n jhub logs <pod_name>` | List logs from pod named `<pod_name>` in `jhub` namespace. Pod must be running to access to its logs |
-| `kubectl logs <pod_name> -n jhub -c <container_name> --previous` | List logs from pod named `<pod_name>` in `jhub` namespace if many docker containers are in a pod, so <container_name> stands for a container to find |
+| `kubectl logs <pod_name> -n jhub -c <container_name> --previous` | List logs from pod named `<pod_name>` in `jhub` namespace if many docker containers are in a pod, where `<container_name>` stands for a container to find. Note the key `--previous` for the logs of a previous container launch |
 | `kubectl -n jhub exec -it <pod_name> /bin/bash` | Get access to shell `/bin/bash` of the running pod (container) `<pod_name>` in `jhub` namespace |
 
 Full list of the possible `kubectl` commands can be found [here](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands).
