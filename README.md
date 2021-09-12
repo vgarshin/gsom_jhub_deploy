@@ -138,15 +138,14 @@ First of all, list all storage classes to find `default` storage class:
 ```
 kubectl get storageclass
 ```
-You may want to get detailed description of selected storage class e.g. `<some-storage-class>` in TAML format, so use a command below:
+You may want to get detailed description of selected storage class e.g. `<some-storage-class>` in YAML format, so use a command below:
 ```
 kubectl get storageclass <some-storage-class> -o yaml
 ```
-
-Patch a class:
+There should be only one default storage class therefor if you find no or few storage classes, you should patch existing classes with the command:
 
 ```
-kubectl patch storageclass csi-ceph-ssd-dp1 -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+kubectl patch storageclass <some-storage-class> -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
 ```
 
 #### Case 2. Topology mismatch
