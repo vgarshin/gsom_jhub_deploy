@@ -128,12 +128,24 @@ All of the images for environments are taken or inherited from [THIS RESOURCE](h
 
 ## Troubleshooting
 
-Here known troubleshooyig cases are listed that occured during JupyterHub usage in MCS Kubernetes.
+Some known troubleshootig cases are listed below. This cases occured during JupyterHub usage in MCS Kubernetes.
 
 #### Case 1. No default storage class
+
+There might be a case when default [Kubernetes storage classes](https://kubernetes.io/docs/concepts/storage/storage-classes/) are changed in MCS cloud. It may affect JupyterHub performance, so few actions are needed. 
+
+First of all, list all storage classes to find `default` storage class:
 ```
 kubectl get storageclass
-kubectl get storageclass csi-ceph-ssd-dp1 -o yaml
+```
+You may want to get detailed description of selected storage class e.g. `<some-storage-class>` in TAML format, so use a command below:
+```
+kubectl get storageclass <some-storage-class> -o yaml
+```
+
+Patch a class:
+
+```
 kubectl patch storageclass csi-ceph-ssd-dp1 -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
 ```
 
