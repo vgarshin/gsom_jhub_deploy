@@ -68,8 +68,9 @@ singleuser:
 #  startTimeout: 600
 # ==========================================
   image:
-     name: vgarshin/mibadsai
-     tag: 20210603v3
+    name: vgarshin/mibadsai
+    tag: 20210912v1
+#    tag: 20210603v3
   profileList:
     - display_name: "Data Science environment"
       description: "All libraries for MiBA courses and labs."
@@ -83,9 +84,9 @@ singleuser:
       kubespawner_override:
         image: jupyter/r-notebook:a0a544e6dc6e
     - display_name: "Minimal Python environment"
-      description: "Pure Python and some libraries."
+      description: "Pure Python with some libraries and Unix man packages."
       kubespawner_override:
-        image: jupyter/minimal-notebook:a0a544e6dc6e
+        image: vgarshin/mibaminpy:20210912v0
 # ==========================================
 # Hadoop client image
 #    - display_name: "Hadoop environment"
