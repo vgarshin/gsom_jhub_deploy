@@ -3,7 +3,7 @@ Manual for Zero to JupyterHub with Kubernetes Deploy
 
 ## Introduction
 
-This manual will get you through installation process of [JupyterHub for Kubernetes](https://github.com/jupyterhub/zero-to-jupyterhub-k8s/) on a cloud using [Kubernetes](https://kubernetes.io/) with [Helm](https://helm.sh/) and  JupyterHub customization for use in [MiBA program](https://gsom.spbu.ru/en/programmes/graduate/miba/) technology oriented courses.
+This manual will get you through installation process of [JupyterHub for Kubernetes](https://github.com/jupyterhub/zero-to-jupyterhub-k8s/) on a cloud using [Kubernetes](https://kubernetes.io/) with [Helm](https://helm.sh/) and JupyterHub customization for use in [MiBA program](https://gsom.spbu.ru/en/programmes/graduate/miba/) technology oriented courses.
 
 You also may find [The Zero to JupyterHub with Kubernetes guide](https://zero-to-jupyterhub.readthedocs.io/) for detais and it  is complemented well by the documentation for [JupyterHub](https://jupyterhub.readthedocs.io/).
 
@@ -23,8 +23,7 @@ There will be a configuration file `<filename>.yaml` available after the cluster
 
 ### STEP 1. Install kubectl
 
-You may use the manual that offers following steps:
-kubectl install
+You may use the [manual](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/) that offers following steps:
 ```
 sudo apt-get update && sudo apt-get install -y apt-transport-https
 curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
@@ -35,11 +34,11 @@ After install process finishes you will need `<filename>.yaml` uploaded to the h
 ```
 export KUBECONFIG=~/<filename>.yaml
 ```
-After that you will get an access to the cluster:
+...and you will get an access to the cluster:
 ```
 kubectl get nodes
 ```
-Set the correct permissions for `<filename>.yaml`:
+Setting the correct permissions for `<filename>.yaml`:
 ```
 chmod g-r arkh-kjh-01_kubeconfig.yaml
 chmod o-r arkh-kjh-01_kubeconfig.yaml
@@ -94,7 +93,7 @@ To get access to MCS Kubernetes dashboard follow the instructions from [MCS manu
 kubectl proxy
 ```
 
-You also may what to monitor health or debug the claster with the list of ommands in the table below. They might be useful to discover basic troubles with the JupyterHub and the Kubernetes cluster:
+You also may want to monitor health or debug the claster with the list of commands in the table below. They might be useful to discover basic troubles with the JupyterHub and the Kubernetes cluster:
 
 | Command | Description |
 |:---|:---|
@@ -112,13 +111,13 @@ You also may what to monitor health or debug the claster with the list of ommand
 | `kubectl logs <pod_name> -n jhub -c <container_name> --previous` | List logs from pod named `<pod_name>` in `jhub` namespace if many docker containers are in a pod, where `<container_name>` stands for a container to find. Note the key `--previous` for the logs of a previous container launch |
 | `kubectl -n jhub exec -it <pod_name> /bin/bash` | Get access to shell `/bin/bash` of the running pod (container) `<pod_name>` in `jhub` namespace |
 
-Full list of the possible `kubectl` commands can be found [HERE](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands).
+Full list of the possible `kubectl` commands can be found [in Kubernetes manual](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands).
 
 ## Customization
 
 #### Environments
 
-JupyterHub allows to customize user environment which is the set of software packages, environment variables, and various files that are present when the user logs in. Overall manual for customization options can be found [HERE](https://zero-to-jupyterhub.readthedocs.io/en/latest/jupyterhub/customizing/user-environment.html).
+JupyterHub allows to customize user environment which is the set of software packages, environment variables, and various files that are present when the user logs in. Overall manual for customization options can be found [in Zero-to-JupyterHub manual](https://zero-to-jupyterhub.readthedocs.io/en/latest/jupyterhub/customizing/user-environment.html).
 
 Current installation already offers a few environments:
 - Data Science environment
@@ -126,7 +125,7 @@ Current installation already offers a few environments:
 - R environment
 - Minimal Python environment
 
-All of the images for environments are taken or inherited from [THIS RESOURCE](https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html).
+All of the images for environments are taken or inherited from the [Jupyter docker stack collection](https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html).
 
 #### How to customize
 
@@ -137,8 +136,8 @@ sudo apt-get install apt-transport-https ca-certificates curl gnupg-agent softwa
 sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 sudo apt-key fingerprint 0EBFCD88
 sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-		$(lsb_release -cs) \
-		stable"
+    $(lsb_release -cs) \
+    stable"
 sudo apt-get update
 sudo apt-get install docker-ce docker-ce-cli containerd.io
 ```
@@ -215,4 +214,4 @@ kubectl label nodes miba-kjh-01-master-0 topology.cinder.csi.openstack.org/zone=
 
 ## More
 
-User's manual can be found [HERE](https://github.com/vgarshin/gsom_jhub_manual).
+User's manual can be found [here](https://github.com/vgarshin/gsom_jhub_manual).
