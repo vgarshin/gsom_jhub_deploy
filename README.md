@@ -130,7 +130,7 @@ All of the images for environments are taken or inherited from [THIS RESOURCE](h
 
 #### How to customize
 
-Install docker:
+Install docker https://docs.docker.com/engine/install/ubuntu/:
 ```
 sudo apt-get update
 sudo apt-get install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
