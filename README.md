@@ -130,7 +130,7 @@ All of the images for environments are taken or inherited from [THIS RESOURCE](h
 
 #### How to customize
 
-Install docker https://docs.docker.com/engine/install/ubuntu/:
+Fisrt, there must be a docker installed. Here is example of [installation for Ubuntu](https://docs.docker.com/engine/install/ubuntu/):
 ```
 sudo apt-get update
 sudo apt-get install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
@@ -143,40 +143,28 @@ sudo apt-get update
 sudo apt-get install docker-ce docker-ce-cli containerd.io
 ```
 
-Create a new environment:
+In order to create a new environment you need to create a [Dockerfile](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/) first:
 ```
 mkdir dockerfiledsai
 nano dockerfiledsai/Dockerfile
-FROM jupyter/tensorflow-notebook:latest
-
-USER root
-
-RUN sudo apt update && apt-get install firefox -y
-
-RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.29.1/geckodriver-v0.29.1-linux64.tar.gz && \
-    tar -xvzf geckodriver* && chmod +x geckodriver && mv geckodriver /usr/local/bin/
-
-USER $NB_UID
-
-RUN pip install jupyter-server-proxy && \
-    jupyter serverextension enable --sys-prefix jupyter_server_proxy
-
-RUN pip install --no-cache-dir nltk lightgbm xgboost catboost \
-        pydot pydotplus graphviz plumbum wordcloud plotly pymystem3 \
-        stats hyperopt torch torchvision tensorflow_addons pymorphy2 \
-        boto3 s3fs psycopg2-binary langdetect tldextract selenium \
-        scrapy natasha gensim word2vec graphviz dash jupyter-dash \
-        python-Levenshtein
-sudo docker build -t mibadsai dockerfiledsai
-sudo docker tag mibadsai vgarshin/mibadsai:latest
-sudo docker login
-sudo docker push vgarshin/mibadsai:latest
-nano config.yaml
-  image:
-     name: vgarshin/mibadsai
-     tag: latest
-./helmupgradekjh.sh
 ```
+Or you may edit one of existing Dockerfiles e.g. [this file](https://github.com/vgarshin/gsom_jhub_deploy/blob/master/dockerfiledsai/Dockerfile).
+
+Next step are to [build a docker image](https://docs.docker.com/engine/reference/commandline/build/) and [push in to the registry](https://docs.docker.com/engine/reference/commandline/push/): 
+```
+sudo docker build -t <image_name> dockerfiledsai
+sudo docker tag mibadsai <docker_id>/<image_name>:<image_tag>
+sudo docker login
+sudo docker push <docker_id>/<image_name>:<image_tag>
+```
+
+You also need to edit [config file](https://github.com/vgarshin/gsom_jhub_deploy/blob/master/mibaconfig.yaml):
+```
+image:
+  name: <docker_id>/<image_name>
+  tag: <image_tag>
+```
+...and upgrade JupyterHub by running the script `./upgradejhub.sh`.
 
 ## Troubleshooting
 
@@ -188,6 +176,7 @@ There might be a case when default [Kubernetes storage classes](https://kubernet
 
 First of all, list all storage classes to find `default` storage class:
 ```
+export KUBECONFIG=~/<filename>.yaml
 kubectl get storageclass
 ```
 You may want to get detailed description of selected storage class e.g. `<some-storage-class>` in YAML format, so use a command below:
@@ -206,6 +195,7 @@ Topology mismatc appers if master node and nodes are created in different zones.
 
 You can check nodes to find topology (zone) labels:
 ```
+export KUBECONFIG=~/<filename>.yaml
 kubectl get nodes --show-labels
 ```
 And the typical output is as follows:
