@@ -116,6 +116,8 @@ Full list of the possible `kubectl` commands can be found [HERE](https://kuberne
 
 ## Customization
 
+#### Environments
+
 JupyterHub allows to customize user environment which is the set of software packages, environment variables, and various files that are present when the user logs in. Overall manual for customization options can be found [HERE](https://zero-to-jupyterhub.readthedocs.io/en/latest/jupyterhub/customizing/user-environment.html).
 
 Current installation already offers a few environments:
@@ -125,6 +127,56 @@ Current installation already offers a few environments:
 - Minimal Python environment
 
 All of the images for environments are taken or inherited from [THIS RESOURCE](https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html).
+
+#### How to customize
+
+Install docker:
+```
+sudo apt-get update
+sudo apt-get install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+sudo apt-key fingerprint 0EBFCD88
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+		$(lsb_release -cs) \
+		stable"
+sudo apt-get update
+sudo apt-get install docker-ce docker-ce-cli containerd.io
+```
+
+Create a new environment:
+```
+mkdir dockerfiledsai
+nano dockerfiledsai/Dockerfile
+FROM jupyter/tensorflow-notebook:latest
+
+USER root
+
+RUN sudo apt update && apt-get install firefox -y
+
+RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.29.1/geckodriver-v0.29.1-linux64.tar.gz && \
+    tar -xvzf geckodriver* && chmod +x geckodriver && mv geckodriver /usr/local/bin/
+
+USER $NB_UID
+
+RUN pip install jupyter-server-proxy && \
+    jupyter serverextension enable --sys-prefix jupyter_server_proxy
+
+RUN pip install --no-cache-dir nltk lightgbm xgboost catboost \
+        pydot pydotplus graphviz plumbum wordcloud plotly pymystem3 \
+        stats hyperopt torch torchvision tensorflow_addons pymorphy2 \
+        boto3 s3fs psycopg2-binary langdetect tldextract selenium \
+        scrapy natasha gensim word2vec graphviz dash jupyter-dash \
+        python-Levenshtein
+sudo docker build -t mibadsai dockerfiledsai
+sudo docker tag mibadsai vgarshin/mibadsai:latest
+sudo docker login
+sudo docker push vgarshin/mibadsai:latest
+nano config.yaml
+  image:
+     name: vgarshin/mibadsai
+     tag: latest
+./helmupgradekjh.sh
+```
 
 ## Troubleshooting
 
@@ -142,7 +194,7 @@ You may want to get detailed description of selected storage class e.g. `<some-s
 ```
 kubectl get storageclass <some-storage-class> -o yaml
 ```
-There should be only one default storage class, therefore if you find no or few storage classes, you should patch existing classes with the command:
+There should be __only one default storage class__, therefore if you find no or few storage classes, you should patch existing classes with the command:
 
 ```
 kubectl patch storageclass <some-storage-class> -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
@@ -150,17 +202,22 @@ kubectl patch storageclass <some-storage-class> -p '{"metadata": {"annotations":
 
 #### Case 2. Topology mismatch
 
-Check nodes to find topology labels:
+Topology mismatc appers if master node and nodes are created in different zones. 
+
+You can check nodes to find topology (zone) labels:
 ```
 kubectl get nodes --show-labels
 ```
-And the output:
+And the typical output is as follows:
 ```
 NAME                     STATUS   ROLES    AGE     VERSION   LABELS
 miba-kjh-01-group-01-0   Ready    <none>   6d15h   v1.17.8   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/instance-type=59f7faf3-d817-4cb8-ae69-8b4b92565f94,beta.kubernetes.io/os=linux,failure-domain.beta.kubernetes.io/zone=DP1,kubernetes.io/arch=amd64,kubernetes.io/hostname=miba-kjh-01-group-01-0,kubernetes.io/os=linux,mcs.mail.ru/mcs-nodepool=group-01,node.kubernetes.io/instance-type=59f7faf3-d817-4cb8-ae69-8b4b92565f94,topology.cinder.csi.openstack.org/zone=MS1,topology.kubernetes.io/zone=DP1
 miba-kjh-01-master-0     Ready    master   278d    v1.17.8   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/instance-type=d659fa16-c7fb-42cf-8a5e-9bcbe80a7538,beta.kubernetes.io/os=linux,failure-domain.beta.kubernetes.io/zone=MS1,kubernetes.io/arch=amd64,kubernetes.io/hostname=miba-kjh-01-master-0,kubernetes.io/os=linux,node-role.kubernetes.io/master=,node.kubernetes.io/instance-type=d659fa16-c7fb-42cf-8a5e-9bcbe80a7538,role.node.kubernetes.io/master=,topology.cinder.csi.openstack.org/zone=MS1,topology.kubernetes.io/zone=MS1
 ```
-Set the right label for zone:
+Note the labels `zone=MS1` and `zone=DP1` that are not consistent for `miba-kjh-01-master-0` and `miba-kjh-01-group-01-0` nodes.
+
+
+It is necessary to patch nodes and set the right label for zone e.g.:
 ```
 kubectl label nodes miba-kjh-01-master-0 failure-domain.beta.kubernetes.io/zone=DP1 --overwrite=true
 kubectl label nodes miba-kjh-01-master-0 topology.cinder.csi.openstack.org/zone=DP1 --overwrite=true
