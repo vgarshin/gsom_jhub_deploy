@@ -79,6 +79,10 @@ singleuser:
       description: "Jupyter and PySpark image with S3 access."
       kubespawner_override:
         image: vgarshin/mibapysparks3:20211002v1
+        cpu_guarantee: 5
+        cpu_limit: 5
+        mem_guarantee: 18G
+        mem_limit: 18G
     - display_name: "R environment"
       description: "Popular packages from the R ecosystem."
       kubespawner_override:
@@ -87,6 +91,10 @@ singleuser:
       description: "Pure Python with some libraries and Unix man packages."
       kubespawner_override:
         image: vgarshin/mibaminpy:20210912v0
+        cpu_guarantee: 1
+        cpu_limit: 2
+        mem_guarantee: 2G
+        mem_limit: 4G
 # ==========================================
 # Hadoop client image
 #    - display_name: "Hadoop environment"
