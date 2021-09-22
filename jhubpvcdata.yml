@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: jupyterhub-data-pv
+spec:
+  accessModes:
+    - ReadWriteMany
+  mountOptions:
+    - hard
+    - nfsvers=4.0
+    - timeo=60
+    - retrans=10
+  capacity:
+    storage: 32Gi
+  nfs:
+    server: 10.0.0.44
+    path: "/shares/share-e8dcdfab-2c40-43f4-b8c0-1af448c87262"
+  persistentVolumeReclaimPolicy: "Recycle"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jupyterhub-data-pvc
+  namespace: jhub
+spec:
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 32Gi
+  volumeName: "jupyterhub-data-pv"
+  storageClassName: ""
