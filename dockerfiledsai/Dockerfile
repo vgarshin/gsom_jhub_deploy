@@ -8,7 +8,7 @@ RUN apt update && \
 RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.29.1/geckodriver-v0.29.1-linux64.tar.gz && \
     tar -xvzf geckodriver* && chmod +x geckodriver && mv geckodriver /usr/local/bin/
 
-RUN apt install openssh-server -y && \ 
+RUN apt install openssh-server tree htop tmux -y && \
     rm -r /var/lib/apt/lists/*
 
 USER $NB_UID

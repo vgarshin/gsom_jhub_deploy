@@ -56,9 +56,9 @@ singleuser:
 # ==========================================
 # local DBs creds
   extraEnv:
-    CLICKHOUSE_USER: "logsreader"
+    CLICKHOUSE_USER: "<CLICKHOUSE_LOGIN>"
     CLICKHOUSE_PASSWORD: "<CLICKHOUSE_PASSWORD>"
-    POSTGRESQL_USER: "reader"
+    POSTGRESQL_USER: "<POSTGRESQL_LOGIN>"
     POSTGRESQL_PASSWORD: "<POSTGRESQL_PASSWORD>"
 # ==========================================
 # JupyterLab turn on-off 
@@ -67,10 +67,25 @@ singleuser:
 # timeout to user's server start
 #  startTimeout: 600
 # ==========================================
+# 5 users per node config
+  cpu:
+    limit: 3
+    guarantee: 3
+  memory:
+    limit: 10G
+    guarantee: 10G
+# ==========================================
+# 3 users per node config
+#  cpu:
+#    limit: 5
+#    guarantee: 5
+#  memory:
+#    limit: 18G
+#    guarantee: 18G
+# ==========================================
   image:
     name: vgarshin/mibadsai
-    tag: 20210912v1
-#    tag: 20210603v3
+    tag: 20210917v0
   profileList:
     - display_name: "Data Science environment"
       description: "All libraries for MiBA courses and labs."
@@ -90,7 +105,7 @@ singleuser:
     - display_name: "Minimal Python environment"
       description: "Pure Python with some libraries and Unix man packages."
       kubespawner_override:
-        image: vgarshin/mibaminpy:20210912v0
+        image: vgarshin/mibaminpy:20210917v0
         cpu_guarantee: 1
         cpu_limit: 2
         mem_guarantee: 2G
@@ -101,22 +116,6 @@ singleuser:
 #      description: "HDFS client for Hadoop cluster access."
 #      kubespawner_override:
 #        image: vgarshin/mibahadoop:20211503v2
-# ==========================================
-# 5 users per node config
-  cpu:
-    limit: 3
-    guarantee: 3
-  memory:
-    limit: 10G
-    guarantee: 10G
-# ==========================================
-# 3 users per node config
-#  cpu:
-#    limit: 5
-#    guarantee: 5
-#  memory:
-#    limit: 18G
-#    guarantee: 18G
 # ==========================================
   storage:
     capacity: 12Gi
@@ -137,7 +136,7 @@ hub:
   config:
     Authenticator:
       admin_users:
-        - vgarshin
+        - <JUPYTERHUB_ADMIN>
     JupyterHub:
       admin_access: true
       authenticator_class: azuread
@@ -149,6 +148,8 @@ hub:
 # ==========================================
   extraConfig:
     mibaConfig: |
+      # =============== START ====================
+      # auth via GSOM Azure AD
       import re
       import json
       from oauthenticator.azuread import AzureAdOAuthenticator
@@ -178,3 +179,86 @@ hub:
       c.MibaAzureAdOAuthenticator.client_id = CREDS['client_id']
       c.MibaAzureAdOAuthenticator.client_secret = CREDS['client_secret']
       c.MibaAzureAdOAuthenticator.username_claim = 'unique_name'
+
+      # ==========================================
+      # advanced instances for selected users (1)
+      async def miba_options_form(spawner):
+        username = spawner.user.name
+        try: 
+          if (username in <ADVANCED_HW_USERS>):
+            cpu_limit = 7
+            mem_limit = '28G'
+            cpu_guarantee = 7
+            mem_guarantee = '28G'
+            spawner.profile_list.extend([
+              {
+                'display_name': 'DataScience environment (advanced)',
+                'description': f'All libraries for MiBA courses and labs with advanced hardware: {cpu_limit} CPU / {mem_limit} RAM.',
+                'slug': 'datascience-environment-adv',
+                'kubespawner_override':
+                  {
+                    'image': 'vgarshin/mibadsai:20211002v1',
+                    'cpu_limit': cpu_limit,
+                    'cpu_guarantee': cpu_guarantee,
+                    'mem_limit': mem_limit,
+                    'mem_guarantee': mem_guarantee
+                  }
+              }
+            ])
+            spawner.profile_list = list({x['display_name']:x for x in spawner.profile_list}.values())
+            spawner.log.info(f"Spawning sever for {username} with advanced configuration option")
+        except Exception as e:
+          spawner.log.info(f"Exception in user {username} advanced configuration option: " + str(e))
+          pass
+        return spawner._options_form_default()
+      c.KubeSpawner.options_form = miba_options_form
+     
+      # ==========================================
+      # advanced instances for selected users (2)
+      #async def miba_pre_spawn_hook(spawner):
+      #  username = spawner.user.name
+      #  if (username in <ADVANCED_HW_USERS>):
+      #    spawner.log.info(f"Spawning sever for {username} with advanced configuration")
+      #    spawner.cpu_limit = 7
+      #    spawner.mem_limit = "28G"
+      #c.KubeSpawner.pre_spawn_hook = miba_pre_spawn_hook
+
+      # ==========================================
+      mnt_data = {
+        'name': 'jupyterhub-data',
+        'pvc': 'jupyterhub-data-pvc',
+        'mountPath': '/home/jovyan/__DATA'
+      }
+
+      data_folder_users = <DATA_FOLDER_USERS>
+
+      from kubernetes import client
+      from kubespawner.utils import get_k8s_model
+      from kubernetes.client.models import ( V1Volume, V1VolumeMount )
+
+      def modify_pod_hook(spawner, pod):
+        try:
+          user = spawner.user.name
+          read_only_flag = False if (user in data_folder_users) else True
+          pod.spec.volumes.append(
+            get_k8s_model(V1Volume, {
+              'name' : mnt_data['name'],
+              'persistentVolumeClaim': {
+                'claimName': mnt_data['pvc']
+              }
+            })
+          )
+          pod.spec.containers[0].volume_mounts.append(
+            get_k8s_model(V1VolumeMount, {
+                'name' : mnt_data['name'],
+                'mountPath' : mnt_data['mountPath'],
+                'readOnly': read_only_flag
+            })
+          )
+        except Exception as e:
+          spawner.log.info("Exception in shared-mounts: " + str(e))
+          pass
+        return pod
+      c.KubeSpawner.modify_pod_hook = modify_pod_hook
+      
+      # ================= END ====================

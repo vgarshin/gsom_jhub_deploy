@@ -8,6 +8,7 @@ RUN rm /etc/dpkg/dpkg.cfg.d/excludes
 # Reinstall all currently installed packages in order to get the man pages back
 RUN apt-get update && \
     dpkg -l | grep ^ii | cut -d' ' -f3 | xargs apt-get install -y --reinstall && \
+    apt install tree htop tmux -y && \
     apt install man-db manpages manpages-posix -y && \
     mv /usr/bin/man.REAL /usr/bin/man -f && \
     rm -r /var/lib/apt/lists/*
