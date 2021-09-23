@@ -77,11 +77,17 @@ POSTGRESQL_PASSWORD <postgresql_password>
 TENANT_ID <tenant_id>
 CLIENT_ID <client_id>
 CLIENT_SECRET <client_secret>
+JUPYTERHUB_ADMIN <admin_name>
+ADVANCED_HW_USERS ["user_name1","stXXXXXX","stYYYYYY","stZZZZZZ"]
+DATA_FOLDER_USERS ["user_name2","stAAAAAA","stBBBBBB","stCCCCCC"]
 ```
 where:
 -  `<secret_token>` can be generated with `openssl rand -hex 32` command
 -  `<click_password>` and `<postgresql_password>` are passwords for databases (not necessary for this step, can be omitted)
 -  `<tenant_id>`, `<client_id>`, `<client_secret>` are credentials for Azure AD authentification
+-  `<admin_name>` is for admin user to manage JupyterHub in web interface
+-  `["user_name1","stXXXXXX","stYYYYYY","stZZZZZZ"]` is a list of users' logins (without spaces between!) who can access to advanced configuration with more CPUs and RAM
+-  `["user_name2","stAAAAAA","stBBBBBB","stCCCCCC"]` is a list of users' logins (without spaces between!) who can write to `__DATA` folder, other users can only read
 4. Run `installjhub.sh` script to start installation process.
 5. Run `kubectl -n jhubsir describe svc proxy-public` to get public IP address and register that address for `jhas01.gsom.spbu.ru` domain name.
 6. After some time go to login JupyterHub page https://jhas01.gsom.spbu.ru to start work.
@@ -190,7 +196,7 @@ kubectl patch storageclass <some-storage-class> -p '{"metadata": {"annotations":
 
 #### Case 2. Topology mismatch
 
-Topology mismatc appers if master node and nodes are created in different zones. 
+Topology mismatch appears if master node and nodes are created in different zones. 
 
 You can check nodes to find topology (zone) labels:
 ```
@@ -210,6 +216,21 @@ It is necessary to patch nodes and set the right label for zone e.g.:
 ```
 kubectl label nodes miba-kjh-01-master-0 failure-domain.beta.kubernetes.io/zone=DP1 --overwrite=true
 kubectl label nodes miba-kjh-01-master-0 topology.cinder.csi.openstack.org/zone=DP1 --overwrite=true
+```
+
+#### Case 3. Auto HTTPS is broken
+
+Symptoms are bad certificate messages from the browser while trying to access `https://jhas01.gsom.spbu.ru`. The easy and straightforward solution is to restart pod with auto-https. At first step you can get logs from the auto-https pod:
+```
+$ kubectl logs autohttps-5fd5d5f7bf-tl9ml -n jhubtest -c traefik
+```
+Then there are two options, the first is to restart pod:
+```
+$ kubectl rollout restart deployment/autohttps --namespace=jhubtest
+```
+The second option is to force delete pod and wait it will be created after that:
+```
+$ kubectl delete pod autohttps-5fd5d5f7bf-tl9ml -n jhubtest  --grace-period=0  --force
 ```
 
 ## More
