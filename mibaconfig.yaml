@@ -187,9 +187,9 @@ hub:
         try: 
           if (username in <ADVANCED_HW_USERS>):
             cpu_limit = 7
-            mem_limit = '28G'
+            mem_limit = '25G'
             cpu_guarantee = 7
-            mem_guarantee = '28G'
+            mem_guarantee = '25G'
             spawner.profile_list.extend([
               {
                 'display_name': 'DataScience environment (advanced)',
@@ -197,7 +197,7 @@ hub:
                 'slug': 'datascience-environment-adv',
                 'kubespawner_override':
                   {
-                    'image': 'vgarshin/mibadsai:20211002v1',
+                    'image': 'vgarshin/mibadsai:20210917v0',
                     'cpu_limit': cpu_limit,
                     'cpu_guarantee': cpu_guarantee,
                     'mem_limit': mem_limit,
