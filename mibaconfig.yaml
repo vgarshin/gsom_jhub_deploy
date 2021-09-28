@@ -102,6 +102,10 @@ singleuser:
       description: "Popular packages from the R ecosystem."
       kubespawner_override:
         image: jupyter/r-notebook:a0a544e6dc6e
+    - display_name: "PostgreSQL environment"
+      description: "Demo PostgreSQL database for the local experiments."
+      kubespawner_override:
+        image: vgarshin/mibapostgres:20210928v5
     - display_name: "Minimal Python environment"
       description: "Pure Python with some libraries and Unix man packages."
       kubespawner_override:
