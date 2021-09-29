@@ -106,6 +106,14 @@ singleuser:
       description: "Demo PostgreSQL database for the local experiments."
       kubespawner_override:
         image: vgarshin/mibapostgres:20210928v5
+        lifecycle_hooks:
+          postStart:
+            exec:
+              command:
+                - "sh"
+                - "-c"
+                - >
+                  echo redspot | sudo -S service postgresql start;
     - display_name: "Minimal Python environment"
       description: "Pure Python with some libraries and Unix man packages."
       kubespawner_override:
