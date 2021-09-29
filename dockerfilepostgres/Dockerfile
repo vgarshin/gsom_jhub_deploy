@@ -35,12 +35,6 @@ RUN service postgresql restart && \
 #    echo redspot | sudo -S service postgresql restart && \
 #    psql -a -f  demo-small-en-20170815.sql
 
-USER root
-
-# Changed start script to run PostgreSQL at spawn
-COPY start.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/start.sh
-
 USER ${NB_USER}
 
 RUN pip install --no-cache-dir psycopg2 ipython-sql
