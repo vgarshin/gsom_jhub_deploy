@@ -85,7 +85,7 @@ singleuser:
 # ==========================================
   image:
     name: vgarshin/mibadsai
-    tag: 20210917v0
+    tag: 20211004v0
   profileList:
     - display_name: "Data Science environment"
       description: "All libraries for MiBA courses and labs."
@@ -105,7 +105,7 @@ singleuser:
     - display_name: "PostgreSQL environment"
       description: "Demo PostgreSQL database for the local experiments."
       kubespawner_override:
-        image: vgarshin/mibapostgres:20210928v5
+        image: vgarshin/mibapostgres:20210929v0
         lifecycle_hooks:
           postStart:
             exec:
@@ -114,6 +114,22 @@ singleuser:
                 - "-c"
                 - >
                   echo redspot | sudo -S service postgresql start;
+    - display_name: "Hadoop (with YARN) and Spark environment"
+      description: "Hadoop mini-cluster with Map-Reduce operations and standalone Spark (EXPERIMENTAL)."
+      kubespawner_override:
+        image: vgarshin/mibahdpsa:20211008v1
+        cpu_guarantee: 2
+        cpu_limit: 2
+        mem_guarantee: 4G
+        mem_limit: 4G
+        lifecycle_hooks:
+          postStart:
+            exec:
+              command:
+                - "sh"
+                - "-c"
+                - >
+                  echo redspot | sudo -S service ssh start && sudo runuser hadoop -s /bin/bash -c "export PATH=$PATH:$JAVA_HOME/bin:/usr/local/hadoop/bin:/usr/local/hadoop/sbin && export HADOOP_HOME=/usr/local/hadoop && export HADOOP_CONF_DIR=$HADOOP_HOME/etc/hadoop && /usr/local/hadoop/bin/init/start-hadoop.sh && hdfs dfs -mkdir /jovyan/ && hdfs dfs -chown -R jovyan:hadoopusers /jovyan/ && hadoop fs -chmod -R 777 /tmp";
     - display_name: "Minimal Python environment"
       description: "Pure Python with some libraries and Unix man packages."
       kubespawner_override:
