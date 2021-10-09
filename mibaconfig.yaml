@@ -114,14 +114,19 @@ singleuser:
                 - "-c"
                 - >
                   echo redspot | sudo -S service postgresql start;
+                  cd /tmp;
+                  git clone https://github.com/vgarshin/gsom_jhub_manual;
+                  mkdir -p /home/jovyan/__MANUAL;
+                  rm -r /home/jovyan/__MANUAL/*;
+                  mv -f /tmp/gsom_jhub_manual/* /home/jovyan/__MANUAL
     - display_name: "Hadoop (with YARN) and Spark environment"
       description: "Hadoop mini-cluster with Map-Reduce operations and standalone Spark (EXPERIMENTAL)."
       kubespawner_override:
         image: vgarshin/mibahdpsa:20211008v1
-        cpu_guarantee: 2
-        cpu_limit: 2
-        mem_guarantee: 4G
-        mem_limit: 4G
+        cpu_guarantee: 5
+        cpu_limit: 5
+        mem_guarantee: 18G
+        mem_limit: 18G
         lifecycle_hooks:
           postStart:
             exec:
@@ -130,6 +135,11 @@ singleuser:
                 - "-c"
                 - >
                   echo redspot | sudo -S service ssh start && sudo runuser hadoop -s /bin/bash -c "export PATH=$PATH:$JAVA_HOME/bin:/usr/local/hadoop/bin:/usr/local/hadoop/sbin && export HADOOP_HOME=/usr/local/hadoop && export HADOOP_CONF_DIR=$HADOOP_HOME/etc/hadoop && /usr/local/hadoop/bin/init/start-hadoop.sh && hdfs dfs -mkdir /jovyan/ && hdfs dfs -chown -R jovyan:hadoopusers /jovyan/ && hadoop fs -chmod -R 777 /tmp";
+                  cd /tmp;
+                  git clone https://github.com/vgarshin/gsom_jhub_manual;
+                  mkdir -p /home/jovyan/__MANUAL;
+                  rm -r /home/jovyan/__MANUAL/*;
+                  mv -f /tmp/gsom_jhub_manual/* /home/jovyan/__MANUAL
     - display_name: "Minimal Python environment"
       description: "Pure Python with some libraries and Unix man packages."
       kubespawner_override:
