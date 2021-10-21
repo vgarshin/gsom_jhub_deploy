@@ -119,6 +119,29 @@ singleuser:
                   mkdir -p /home/jovyan/__MANUAL;
                   rm -r /home/jovyan/__MANUAL/*;
                   mv -f /tmp/gsom_jhub_manual/* /home/jovyan/__MANUAL
+    - display_name: "Airflow environment"
+      description: "Airflow platform for the local experiments (EXPERIMENTAL)."
+      kubespawner_override:
+        image: vgarshin/mibaairflow:20211021v0
+        cpu_guarantee: 5
+        cpu_limit: 5
+        mem_guarantee: 18G
+        mem_limit: 18G
+        lifecycle_hooks:
+          postStart:
+            exec:
+              command:
+                - "sh"
+                - "-c"
+                - >
+                  echo redspot | sudo -S service postgresql start;
+                  cd /tmp;
+                  git clone https://github.com/vgarshin/gsom_jhub_manual;
+                  mkdir -p /home/jovyan/__MANUAL;
+                  rm -r /home/jovyan/__MANUAL/*;
+                  mv -f /tmp/gsom_jhub_manual/* /home/jovyan/__MANUAL;
+                  mkdir -p /home/jovyan/airflow;
+                  yes | cp -rf /usr/local/etc/airflow/airflow.cfg /home/jovyan/airflow/
     - display_name: "Hadoop (with YARN) and Spark environment"
       description: "Hadoop mini-cluster with Map-Reduce operations and standalone Spark (EXPERIMENTAL)."
       kubespawner_override:
