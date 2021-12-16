@@ -22,4 +22,4 @@ RUN pip install --no-cache-dir nltk lightgbm xgboost catboost \
     stats hyperopt torch torchvision tensorflow_addons pymorphy2 \
     boto3 s3fs psycopg2-binary langdetect tldextract selenium \
     scrapy natasha gensim word2vec graphviz dash jupyter-dash \
-    python-Levenshtein nbgitpuller kds
+    python-Levenshtein nbgitpuller kds xlsxwriter eli5
