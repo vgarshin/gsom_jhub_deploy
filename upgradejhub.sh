@@ -14,7 +14,6 @@ helm upgrade --cleanup-on-fail \
   --namespace $NAMESPACE \
   --version=0.11.1 \
   --values mibaconfig_tmp.yaml \
-  --set-file hub.extraFiles.miba_creds.stringData=/home/ubuntu/mibacreds.json \
   --debug
 
 rm mibaconfig_tmp.yaml

@@ -3,7 +3,7 @@ proxy:
   https:
     enabled: true
     hosts:
-      - jhas01.gsom.spbu.ru
+      - <HOST_NAME>
     letsencrypt:
       contactEmail: vgarshin@vtb.education
 
@@ -31,12 +31,21 @@ scheduling:
 #  scheduling:
 #    userPods:
 #      nodeAffinity:
-        # matchNodePurpose valid options:
-        # - ignore
-        # - prefer (the default)
-        # - require
+#        matchNodePurpose valid options:
+#          - ignore
+#          - prefer (the default)
+#          - require
 #        matchNodePurpose: require
+
 # ==========================================
+# Secret for container registry
+# password lifetime 1 year !!!
+imagePullSecret:
+  create: true
+  registry: cr.yandex
+  username: oauth
+  email: vgarshin@yandex.ru
+  password: <CONTAINER_REGISTRY_PASSWORD>
 
 singleuser:
 # ==========================================
@@ -84,7 +93,7 @@ singleuser:
 #    guarantee: 18G
 # ==========================================
   image:
-    name: vgarshin/mibadsai
+    name: cr.yandex/crptfs8246iv37ojkorv/mibadsai
     tag: 20211206v0
   profileList:
     - display_name: "Data Science environment"
@@ -93,19 +102,19 @@ singleuser:
     - display_name: "Spark environment"
       description: "Jupyter and PySpark image with S3 access."
       kubespawner_override:
-        image: vgarshin/mibapysparks3:20211002v1
+        image: cr.yandex/crptfs8246iv37ojkorv/mibapysparks3:20220204v0
         cpu_guarantee: 5
         cpu_limit: 5
-        mem_guarantee: 18G
-        mem_limit: 18G
+        mem_guarantee: 16G
+        mem_limit: 16G
     - display_name: "R environment"
       description: "Popular packages from the R ecosystem."
       kubespawner_override:
-        image: jupyter/r-notebook:a0a544e6dc6e
+        image: cr.yandex/crptfs8246iv37ojkorv/r-notebook:a0a544e6dc6e
     - display_name: "PostgreSQL environment"
       description: "Demo PostgreSQL database for the local experiments."
       kubespawner_override:
-        image: vgarshin/mibapostgres:20210929v0
+        image: cr.yandex/crptfs8246iv37ojkorv/mibapostgres:20210929v0
         lifecycle_hooks:
           postStart:
             exec:
@@ -122,11 +131,11 @@ singleuser:
     - display_name: "Airflow environment"
       description: "Airflow platform for the local experiments (EXPERIMENTAL)."
       kubespawner_override:
-        image: vgarshin/mibaairflow:20211021v0
+        image: cr.yandex/crptfs8246iv37ojkorv/mibaairflow:20211021v0
         cpu_guarantee: 5
         cpu_limit: 5
-        mem_guarantee: 18G
-        mem_limit: 18G
+        mem_guarantee: 16G
+        mem_limit: 16G
         lifecycle_hooks:
           postStart:
             exec:
@@ -145,11 +154,11 @@ singleuser:
     - display_name: "Hadoop (with YARN) and Spark environment"
       description: "Hadoop mini-cluster with Map-Reduce operations and standalone Spark (EXPERIMENTAL)."
       kubespawner_override:
-        image: vgarshin/mibahdpsa:20211218v0
+        image: cr.yandex/crptfs8246iv37ojkorv/mibahdpsa:20211218v0
         cpu_guarantee: 5
         cpu_limit: 5
-        mem_guarantee: 18G
-        mem_limit: 18G
+        mem_guarantee: 16G
+        mem_limit: 16G
         lifecycle_hooks:
           postStart:
             exec:
@@ -167,7 +176,7 @@ singleuser:
     - display_name: "Minimal Python environment"
       description: "Pure Python with some libraries and Unix man packages."
       kubespawner_override:
-        image: vgarshin/mibaminpy:20210917v0
+        image: cr.yandex/crptfs8246iv37ojkorv/mibaminpy:20210917v0
         cpu_guarantee: 1
         cpu_limit: 2
         mem_guarantee: 2G
@@ -191,8 +200,8 @@ singleuser:
 
 cull:
   enabled: true
-  timeout: 3600
-  every: 300
+  timeout: 1800
+  every: 180
 
 hub:
   config:
@@ -204,9 +213,9 @@ hub:
       authenticator_class: azuread
 # ==========================================
 # not working as expected keep for future
-  extraFiles:
-    miba_creds:
-      mountPath: /etc/jupyterhub/mibacreds.json
+#  extraFiles:
+#    miba_creds:
+#      mountPath: /etc/jupyterhub/mibacreds.json
 # ==========================================
   extraConfig:
     mibaConfig: |
@@ -237,7 +246,7 @@ hub:
       c.JupyterHub.authenticator_class = MibaAzureAdOAuthenticator
 
       c.MibaAzureAdOAuthenticator.tenant_id = CREDS['tenant_id']
-      c.MibaAzureAdOAuthenticator.oauth_callback_url = 'https://jhas01.gsom.spbu.ru/hub/oauth_callback'
+      c.MibaAzureAdOAuthenticator.oauth_callback_url = 'https://<HOST_NAME>/hub/oauth_callback'
       c.MibaAzureAdOAuthenticator.client_id = CREDS['client_id']
       c.MibaAzureAdOAuthenticator.client_secret = CREDS['client_secret']
       c.MibaAzureAdOAuthenticator.username_claim = 'unique_name'
@@ -247,7 +256,9 @@ hub:
       async def miba_options_form(spawner):
         username = spawner.user.name
         try: 
-          if (username in <ADVANCED_HW_USERS>):
+          
+          # Data Science advanced hardware 
+          if (username in <ADVANCED_HW_USERS_DS>):
             cpu_limit = 7
             mem_limit = '25G'
             cpu_guarantee = 7
@@ -259,7 +270,7 @@ hub:
                 'slug': 'datascience-environment-adv',
                 'kubespawner_override':
                   {
-                    'image': 'vgarshin/mibadsai:20210917v0',
+                    'image': 'cr.yandex/crptfs8246iv37ojkorv/mibadsai:20211206v0',
                     'cpu_limit': cpu_limit,
                     'cpu_guarantee': cpu_guarantee,
                     'mem_limit': mem_limit,
@@ -269,10 +280,36 @@ hub:
             ])
             spawner.profile_list = list({x['display_name']:x for x in spawner.profile_list}.values())
             spawner.log.info(f"Spawning sever for {username} with advanced configuration option")
+          
+          # Spark advanced hardware
+          if (username in <ADVANCED_HW_USERS_SPARK>):
+            cpu_limit = 10
+            mem_limit = '32G'
+            cpu_guarantee = 10
+            mem_guarantee = '32G'
+            spawner.profile_list.extend([
+              {
+                'display_name': 'Spark environment (advanced)',
+                'description': f'Jupyter and PySpark image with S3 access with advanced hardware: {cpu_limit} CPU / {mem_limit} RAM.',
+                'slug': 'spark-environment-adv',
+                'kubespawner_override':
+                  {
+                    'image': 'cr.yandex/crptfs8246iv37ojkorv/mibapysparks3:20220204v0',
+                    'cpu_limit': cpu_limit,
+                    'cpu_guarantee': cpu_guarantee,
+                    'mem_limit': mem_limit,
+                    'mem_guarantee': mem_guarantee
+                  }
+              }
+            ])
+            spawner.profile_list = list({x['display_name']:x for x in spawner.profile_list}.values())
+            spawner.log.info(f"Spawning sever for {username} with advanced configuration option")
+
         except Exception as e:
           spawner.log.info(f"Exception in user {username} advanced configuration option: " + str(e))
           pass
         return spawner._options_form_default()
+
       c.KubeSpawner.options_form = miba_options_form
      
       # ==========================================
@@ -291,15 +328,28 @@ hub:
         'pvc': 'jupyterhub-data-pvc',
         'mountPath': '/home/jovyan/__DATA'
       }
-
+      mnt_prj_opts_data = {
+        'name': 'jupyterhub-prj-opts-data',
+        'pvc': 'jupyterhub-prj-opts-data-pvc',
+        'mountPath': '/home/jovyan/__OPTIONS'
+      }
+      mnt_prj_sites_data = {
+        'name': 'jupyterhub-prj-sites-data',
+        'pvc': 'jupyterhub-prj-sites-data-pvc',
+        'mountPath': '/home/jovyan/__SITES'
+      }
+      
       data_folder_users = <DATA_FOLDER_USERS>
-
+      data_prj_opts_folder_users = <DATA_PRJ_OPTS_FOLDER_USERS>
+      data_prj_sites_folder_users = <DATA_PRJ_SITES_FOLDER_USERS>
+      
       from kubernetes import client
       from kubespawner.utils import get_k8s_model
       from kubernetes.client.models import ( V1Volume, V1VolumeMount )
-
+      
       def modify_pod_hook(spawner, pod):
         try:
+          # mount DATA folder
           user = spawner.user.name
           read_only_flag = False if (user in data_folder_users) else True
           pod.spec.volumes.append(
@@ -317,6 +367,40 @@ hub:
                 'readOnly': read_only_flag
             })
           )
+          # mount PROJECT-1 folder
+          if user in data_prj_opts_folder_users:
+            pod.spec.volumes.append(
+              get_k8s_model(V1Volume, {
+                'name' : mnt_prj_opts_data['name'],
+                'persistentVolumeClaim': {
+                  'claimName': mnt_prj_opts_data['pvc']
+                }
+              })
+            )
+            pod.spec.containers[0].volume_mounts.append(
+              get_k8s_model(V1VolumeMount, {
+                'name' : mnt_prj_opts_data['name'],
+                'mountPath' : mnt_prj_opts_data['mountPath'],
+                'readOnly': False
+              })
+            )
+          # mount PROJECT-2 folder
+          if user in data_prj_sites_folder_users:
+            pod.spec.volumes.append(
+              get_k8s_model(V1Volume, {
+                'name' : mnt_prj_sites_data['name'],
+                'persistentVolumeClaim': {
+                  'claimName': mnt_prj_sites_data['pvc']
+                }
+              })
+            )
+            pod.spec.containers[0].volume_mounts.append(
+              get_k8s_model(V1VolumeMount, {
+                'name' : mnt_prj_sites_data['name'],
+                'mountPath' : mnt_prj_sites_data['mountPath'],
+                'readOnly': False
+              })
+            )
         except Exception as e:
           spawner.log.info("Exception in shared-mounts: " + str(e))
           pass
