@@ -200,8 +200,8 @@ singleuser:
 
 cull:
   enabled: true
-  timeout: 1800
-  every: 180
+  timeout: 3600
+  every: 360
 
 hub:
   config:
