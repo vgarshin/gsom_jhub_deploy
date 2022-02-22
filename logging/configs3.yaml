@@ -49,7 +49,7 @@ data:
   output-elasticsearch.conf: |
     [OUTPUT]
         Name s3
-        Match *
+        Match kube.var.log.containers.hub-*
         bucket rawdata-logs-jhub
         endpoint https://storage.yandexcloud.net
         store_dir /simba

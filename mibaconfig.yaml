@@ -261,8 +261,8 @@ hub:
           if (username in <ADVANCED_HW_USERS_DS>):
             cpu_limit = 7
             mem_limit = '25G'
-            cpu_guarantee = 7
-            mem_guarantee = '25G'
+            cpu_guarantee = 5
+            mem_guarantee = '16G'
             spawner.profile_list.extend([
               {
                 'display_name': 'DataScience environment (advanced)',
@@ -285,8 +285,8 @@ hub:
           if (username in <ADVANCED_HW_USERS_SPARK>):
             cpu_limit = 10
             mem_limit = '32G'
-            cpu_guarantee = 10
-            mem_guarantee = '32G'
+            cpu_guarantee = 7
+            mem_guarantee = '25G'
             spawner.profile_list.extend([
               {
                 'display_name': 'Spark environment (advanced)',
