@@ -128,6 +128,23 @@ singleuser:
                   mkdir -p /home/jovyan/__MANUAL;
                   rm -r /home/jovyan/__MANUAL/*;
                   mv -f /tmp/gsom_jhub_manual/* /home/jovyan/__MANUAL
+    - display_name: "MongoDB environment"
+      description: "Demo MongoDB database for the local experiments."
+      kubespawner_override:
+        image: cr.yandex/crptfs8246iv37ojkorv/mibamongo:20220305v1
+        lifecycle_hooks:
+          postStart:
+            exec:
+              command:
+                - "sh"
+                - "-c"
+                - >
+                  echo redspot | sudo -S mongod --dbpath /var/lib/mongo --logpath /var/log/mongodb/mongod.log --fork;
+                  cd /tmp;
+                  git clone https://github.com/vgarshin/gsom_jhub_manual;
+                  mkdir -p /home/jovyan/__MANUAL;
+                  rm -r /home/jovyan/__MANUAL/*;
+                  mv -f /tmp/gsom_jhub_manual/* /home/jovyan/__MANUAL
     - display_name: "Airflow environment"
       description: "Airflow platform for the local experiments (EXPERIMENTAL)."
       kubespawner_override:
