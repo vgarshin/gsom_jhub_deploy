@@ -2,7 +2,7 @@
 # Source jupyter/minimal-notebook is under copyright (c) Jupyter Development Team.
 # and distributed under the terms of the Modified BSD License.
 
-FROM jupyter/minimal-notebook:latest
+FROM jupyter/minimal-notebook:2021-09-06
 
 # This dockerfile is based on an original Dockerfile by Daniel Chudnov <dchud@umich.edu>
 # https://github.com/dchud/datamanagement-notebook/blob/master/Dockerfile
@@ -50,7 +50,7 @@ USER ${NB_USER}
 # Proxy for Airflow UI and etc
 RUN pip install jupyter-server-proxy && \
     jupyter serverextension enable --sys-prefix jupyter_server_proxy && \
-    pip install --no-cache-dir psycopg2 ipython-sql
+    pip install --no-cache-dir psycopg2-binary ipython-sql
 
 RUN pip install "apache-airflow[celery]==2.2.0" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.2.0/constraints-3.8.txt"
 

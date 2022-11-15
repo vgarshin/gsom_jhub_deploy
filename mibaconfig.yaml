@@ -94,7 +94,7 @@ singleuser:
 # ==========================================
   image:
     name: cr.yandex/crptfs8246iv37ojkorv/mibadsai
-    tag: 20211206v0
+    tag: 20221115v1
   profileList:
     - display_name: "Data Science environment"
       description: "All libraries for MiBA courses and labs."
@@ -146,13 +146,13 @@ singleuser:
                   rm -r /home/jovyan/__MANUAL/*;
                   mv -f /tmp/gsom_jhub_manual/* /home/jovyan/__MANUAL
     - display_name: "Airflow environment"
-      description: "Airflow platform for the local experiments (EXPERIMENTAL)."
+      description: "Airflow platform for the local experiments."
       kubespawner_override:
-        image: cr.yandex/crptfs8246iv37ojkorv/mibaairflow:20211021v0
-        cpu_guarantee: 5
-        cpu_limit: 5
-        mem_guarantee: 16G
-        mem_limit: 16G
+        image: cr.yandex/crptfs8246iv37ojkorv/mibaairflow:20220316v0
+        cpu_guarantee: 4
+        cpu_limit: 4
+        mem_guarantee: 12G
+        mem_limit: 12G
         lifecycle_hooks:
           postStart:
             exec:
@@ -169,7 +169,7 @@ singleuser:
                   mkdir -p /home/jovyan/airflow;
                   yes | cp -rf /usr/local/etc/airflow/airflow.cfg /home/jovyan/airflow/
     - display_name: "Hadoop (with YARN) and Spark environment"
-      description: "Hadoop mini-cluster with Map-Reduce operations and standalone Spark (EXPERIMENTAL)."
+      description: "Hadoop mini-cluster with Map-Reduce operations and standalone Spark."
       kubespawner_override:
         image: cr.yandex/crptfs8246iv37ojkorv/mibahdpsa:20211218v0
         cpu_guarantee: 5
@@ -218,7 +218,7 @@ singleuser:
 cull:
   enabled: true
   timeout: 3600
-  every: 360
+  every: 300
 
 hub:
   config:
@@ -355,10 +355,16 @@ hub:
         'pvc': 'jupyterhub-prj-sites-data-pvc',
         'mountPath': '/home/jovyan/__SITES'
       }
+      mnt_apid_amex_data = {
+        'name': 'jupyterhub-apid-amex-data',
+        'pvc': 'jupyterhub-apid-amex-data-pvc',
+        'mountPath': '/home/jovyan/__AMEX'
+      }
       
       data_folder_users = <DATA_FOLDER_USERS>
       data_prj_opts_folder_users = <DATA_PRJ_OPTS_FOLDER_USERS>
       data_prj_sites_folder_users = <DATA_PRJ_SITES_FOLDER_USERS>
+      data_apid_amex_folder_users = <DATA_APID_AMEX_FOLDER_USERS>
       
       from kubernetes import client
       from kubespawner.utils import get_k8s_model
@@ -415,6 +421,23 @@ hub:
               get_k8s_model(V1VolumeMount, {
                 'name' : mnt_prj_sites_data['name'],
                 'mountPath' : mnt_prj_sites_data['mountPath'],
+                'readOnly': False
+              })
+            )
+          # mount APID-1 folder
+          if user in data_apid_amex_folder_users:
+            pod.spec.volumes.append(
+              get_k8s_model(V1Volume, {
+                'name' : mnt_apid_amex_data['name'],
+                'persistentVolumeClaim': {
+                  'claimName': mnt_apid_amex_data['pvc']
+                }
+              })
+            )
+            pod.spec.containers[0].volume_mounts.append(
+              get_k8s_model(V1VolumeMount, {
+                'name' : mnt_apid_amex_data['name'],
+                'mountPath' : mnt_apid_amex_data['mountPath'],
                 'readOnly': False
               })
             )

@@ -50,7 +50,7 @@ data:
     [OUTPUT]
         Name s3
         Match kube.var.log.containers.hub-*
-        bucket rawdata-logs-jhub
+        bucket rawdata-test-logs-jhub
         endpoint https://storage.yandexcloud.net
         store_dir /simba
         use_put_object On

@@ -1,18 +1,20 @@
-FROM jupyter/tensorflow-notebook:latest
+FROM jupyter/tensorflow-notebook:tensorflow-2.4.3
 
 USER root
 
-RUN apt update && \
+RUN apt update && apt install build-essential -y && \
     apt install firefox -y
 
-RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.29.1/geckodriver-v0.29.1-linux64.tar.gz && \
-    tar -xvzf geckodriver* && chmod +x geckodriver && mv geckodriver /usr/local/bin/
+RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.32.0/geckodriver-v0.32.0-linux64.tar.gz && \
+    tar -xvzf geckodriver* && chmod +x geckodriver && mv geckodriver /usr/local/bin/ && rm geckodriver*
 
 RUN apt install openssh-server tree htop tmux -y && \
     apt install graphviz -y && \
     rm -r /var/lib/apt/lists/*
 
 USER $NB_UID
+
+RUN pip install --upgrade pip
 
 RUN pip install jupyter-server-proxy && \
     jupyter serverextension enable --sys-prefix jupyter_server_proxy
