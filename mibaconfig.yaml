@@ -218,7 +218,7 @@ singleuser:
 cull:
   enabled: true
   timeout: 3600
-  every: 300
+  every: 600
 
 hub:
   config:
@@ -287,7 +287,7 @@ hub:
                 'slug': 'datascience-environment-adv',
                 'kubespawner_override':
                   {
-                    'image': 'cr.yandex/crptfs8246iv37ojkorv/mibadsai:20211206v0',
+                    'image': 'cr.yandex/crptfs8246iv37ojkorv/mibadsai:20221115v1',
                     'cpu_limit': cpu_limit,
                     'cpu_guarantee': cpu_guarantee,
                     'mem_limit': mem_limit,
@@ -345,6 +345,7 @@ hub:
         'pvc': 'jupyterhub-data-pvc',
         'mountPath': '/home/jovyan/__DATA'
       }
+      
       mnt_prj_opts_data = {
         'name': 'jupyterhub-prj-opts-data',
         'pvc': 'jupyterhub-prj-opts-data-pvc',
@@ -355,16 +356,56 @@ hub:
         'pvc': 'jupyterhub-prj-sites-data-pvc',
         'mountPath': '/home/jovyan/__SITES'
       }
+      mnt_prj_numai_data = {
+        'name': 'jupyterhub-prj-numai-data',
+        'pvc': 'jupyterhub-prj-numai-data-pvc',
+        'mountPath': '/home/jovyan/__NUMAI'
+      }
+
+      
+      mnt_apid_books_data = {
+        'name': 'jupyterhub-apid-books-data',
+        'pvc': 'jupyterhub-apid-books-data-pvc',
+        'mountPath': '/home/jovyan/__BOOKS'
+      }
+      mnt_apid_sts_data = {
+        'name': 'jupyterhub-apid-sts-data',
+        'pvc': 'jupyterhub-apid-sts-data-pvc',
+        'mountPath': '/home/jovyan/__STS'
+      }
+      mnt_apid_rhi_data = {
+        'name': 'jupyterhub-apid-rhi-data',
+        'pvc': 'jupyterhub-apid-rhi-data-pvc',
+        'mountPath': '/home/jovyan/__RHI'
+      }
       mnt_apid_amex_data = {
         'name': 'jupyterhub-apid-amex-data',
         'pvc': 'jupyterhub-apid-amex-data-pvc',
         'mountPath': '/home/jovyan/__AMEX'
       }
+      mnt_apid_handm_data = {
+        'name': 'jupyterhub-apid-handm-data',
+        'pvc': 'jupyterhub-apid-handm-data-pvc',
+        'mountPath': '/home/jovyan/__HANDM'
+      }
+      mnt_apid_opts_data = {
+        'name': 'jupyterhub-apid-opts-data',
+        'pvc': 'jupyterhub-apid-opts-data-pvc',
+        'mountPath': '/home/jovyan/__OPTS'
+      }
       
       data_folder_users = <DATA_FOLDER_USERS>
+      
       data_prj_opts_folder_users = <DATA_PRJ_OPTS_FOLDER_USERS>
       data_prj_sites_folder_users = <DATA_PRJ_SITES_FOLDER_USERS>
+      data_prj_numai_folder_users = <DATA_PRJ_NUMAI_FOLDER_USERS>
+      
+      data_apid_books_folder_users = <DATA_APID_BOOKS_FOLDER_USERS>
+      data_apid_sts_folder_users = <DATA_APID_STS_FOLDER_USERS>
+      data_apid_rhi_folder_users = <DATA_APID_RHI_FOLDER_USERS>
       data_apid_amex_folder_users = <DATA_APID_AMEX_FOLDER_USERS>
+      data_apid_handm_folder_users = <DATA_APID_HANDM_FOLDER_USERS>
+      data_apid_opts_folder_users = <DATA_APID_OPTS_FOLDER_USERS>
       
       from kubernetes import client
       from kubespawner.utils import get_k8s_model
@@ -424,7 +465,75 @@ hub:
                 'readOnly': False
               })
             )
+          # mount PROJECT-2 folder
+          if user in data_prj_numai_folder_users:
+            pod.spec.volumes.append(
+              get_k8s_model(V1Volume, {
+                'name' : mnt_prj_numai_data['name'],
+                'persistentVolumeClaim': {
+                  'claimName': mnt_prj_numai_data['pvc']
+                }
+              })
+            )
+            pod.spec.containers[0].volume_mounts.append(
+              get_k8s_model(V1VolumeMount, {
+                'name' : mnt_prj_numai_data['name'],
+                'mountPath' : mnt_prj_numai_data['mountPath'],
+                'readOnly': False
+              })
+            )
           # mount APID-1 folder
+          if user in data_apid_books_folder_users:
+            pod.spec.volumes.append(
+              get_k8s_model(V1Volume, {
+                'name' : mnt_apid_books_data['name'],
+                'persistentVolumeClaim': {
+                  'claimName': mnt_apid_books_data['pvc']
+                }
+              })
+            )
+            pod.spec.containers[0].volume_mounts.append(
+              get_k8s_model(V1VolumeMount, {
+                'name' : mnt_apid_books_data['name'],
+                'mountPath' : mnt_apid_books_data['mountPath'],
+                'readOnly': False
+              })
+            )
+          # mount APID-2 folder
+          if user in data_apid_sts_folder_users:
+            pod.spec.volumes.append(
+              get_k8s_model(V1Volume, {
+                'name' : mnt_apid_sts_data['name'],
+                'persistentVolumeClaim': {
+                  'claimName': mnt_apid_sts_data['pvc']
+                }
+              })
+            )
+            pod.spec.containers[0].volume_mounts.append(
+              get_k8s_model(V1VolumeMount, {
+                'name' : mnt_apid_sts_data['name'],
+                'mountPath' : mnt_apid_sts_data['mountPath'],
+                'readOnly': False
+              })
+            )
+          # mount APID-3 folder
+          if user in data_apid_rhi_folder_users:
+            pod.spec.volumes.append(
+              get_k8s_model(V1Volume, {
+                'name' : mnt_apid_rhi_data['name'],
+                'persistentVolumeClaim': {
+                  'claimName': mnt_apid_rhi_data['pvc']
+                }
+              })
+            )
+            pod.spec.containers[0].volume_mounts.append(
+              get_k8s_model(V1VolumeMount, {
+                'name' : mnt_apid_rhi_data['name'],
+                'mountPath' : mnt_apid_rhi_data['mountPath'],
+                'readOnly': False
+              })
+            )
+          # mount APID-4 folder
           if user in data_apid_amex_folder_users:
             pod.spec.volumes.append(
               get_k8s_model(V1Volume, {
@@ -438,6 +547,40 @@ hub:
               get_k8s_model(V1VolumeMount, {
                 'name' : mnt_apid_amex_data['name'],
                 'mountPath' : mnt_apid_amex_data['mountPath'],
+                'readOnly': False
+              })
+            )
+          # mount APID-5 folder
+          if user in data_apid_handm_folder_users:
+            pod.spec.volumes.append(
+              get_k8s_model(V1Volume, {
+                'name' : mnt_apid_handm_data['name'],
+                'persistentVolumeClaim': {
+                  'claimName': mnt_apid_handm_data['pvc']
+                }
+              })
+            )
+            pod.spec.containers[0].volume_mounts.append(
+              get_k8s_model(V1VolumeMount, {
+                'name' : mnt_apid_handm_data['name'],
+                'mountPath' : mnt_apid_handm_data['mountPath'],
+                'readOnly': False
+              })
+            )
+          # mount APID-6 folder
+          if user in data_apid_opts_folder_users:
+            pod.spec.volumes.append(
+              get_k8s_model(V1Volume, {
+                'name' : mnt_apid_opts_data['name'],
+                'persistentVolumeClaim': {
+                  'claimName': mnt_apid_opts_data['pvc']
+                }
+              })
+            )
+            pod.spec.containers[0].volume_mounts.append(
+              get_k8s_model(V1VolumeMount, {
+                'name' : mnt_apid_opts_data['name'],
+                'mountPath' : mnt_apid_opts_data['mountPath'],
                 'readOnly': False
               })
             )
