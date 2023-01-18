@@ -57,6 +57,16 @@ data:
         total_file_size 5M
         upload_timeout 5m
 
+    [OUTPUT]
+        Name s3
+        Match kube.var.log.containers.eventrouter-*
+        bucket rawdata-test-logs-jhub
+        endpoint https://storage.yandexcloud.net
+        store_dir /simba
+        use_put_object On
+        total_file_size 5M
+        upload_timeout 5m
+
   parsers.conf: |
     [PARSER]
         Name   apache

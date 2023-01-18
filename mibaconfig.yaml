@@ -361,7 +361,6 @@ hub:
         'pvc': 'jupyterhub-prj-numai-data-pvc',
         'mountPath': '/home/jovyan/__NUMAI'
       }
-
       
       mnt_apid_books_data = {
         'name': 'jupyterhub-apid-books-data',
@@ -465,7 +464,7 @@ hub:
                 'readOnly': False
               })
             )
-          # mount PROJECT-2 folder
+          # mount PROJECT-3 folder
           if user in data_prj_numai_folder_users:
             pod.spec.volumes.append(
               get_k8s_model(V1Volume, {
