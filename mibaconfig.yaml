@@ -74,7 +74,7 @@ singleuser:
 #  defaultUrl: "/lab"
 # ==========================================
 # timeout to user's server start
-#  startTimeout: 600
+  startTimeout: 450
 # ==========================================
 # 5 users per node config
   cpu:
@@ -345,7 +345,8 @@ hub:
         'pvc': 'jupyterhub-data-pvc',
         'mountPath': '/home/jovyan/__DATA'
       }
-      
+      data_folder_users = <DATA_FOLDER_USERS>
+      # -------------- projects ------------------
       mnt_prj_opts_data = {
         'name': 'jupyterhub-prj-opts-data',
         'pvc': 'jupyterhub-prj-opts-data-pvc',
@@ -354,23 +355,27 @@ hub:
       mnt_prj_sites_data = {
         'name': 'jupyterhub-prj-sites-data',
         'pvc': 'jupyterhub-prj-sites-data-pvc',
-        'mountPath': '/home/jovyan/__SITES'
+        'mountPath': '/home/jovyan/__PLATFORM'
       }
       mnt_prj_numai_data = {
         'name': 'jupyterhub-prj-numai-data',
         'pvc': 'jupyterhub-prj-numai-data-pvc',
         'mountPath': '/home/jovyan/__NUMAI'
       }
-      
+      mnt_apid_sts_data = {
+        'name': 'jupyterhub-apid-sts-data',
+        'pvc': 'jupyterhub-apid-sts-data-pvc',
+        'mountPath': '/home/jovyan/__VK'
+      }
+      data_prj_opts_folder_users = <DATA_PRJ_OPTS_FOLDER_USERS>
+      data_prj_sites_folder_users = <DATA_PRJ_SITES_FOLDER_USERS>
+      data_prj_numai_folder_users = <DATA_PRJ_NUMAI_FOLDER_USERS>
+      data_apid_sts_folder_users = <DATA_APID_STS_FOLDER_USERS>
+      # ------------- APID course ----------------
       mnt_apid_books_data = {
         'name': 'jupyterhub-apid-books-data',
         'pvc': 'jupyterhub-apid-books-data-pvc',
         'mountPath': '/home/jovyan/__BOOKS'
-      }
-      mnt_apid_sts_data = {
-        'name': 'jupyterhub-apid-sts-data',
-        'pvc': 'jupyterhub-apid-sts-data-pvc',
-        'mountPath': '/home/jovyan/__STS'
       }
       mnt_apid_rhi_data = {
         'name': 'jupyterhub-apid-rhi-data',
@@ -392,20 +397,13 @@ hub:
         'pvc': 'jupyterhub-apid-opts-data-pvc',
         'mountPath': '/home/jovyan/__OPTS'
       }
-      
-      data_folder_users = <DATA_FOLDER_USERS>
-      
-      data_prj_opts_folder_users = <DATA_PRJ_OPTS_FOLDER_USERS>
-      data_prj_sites_folder_users = <DATA_PRJ_SITES_FOLDER_USERS>
-      data_prj_numai_folder_users = <DATA_PRJ_NUMAI_FOLDER_USERS>
-      
       data_apid_books_folder_users = <DATA_APID_BOOKS_FOLDER_USERS>
-      data_apid_sts_folder_users = <DATA_APID_STS_FOLDER_USERS>
       data_apid_rhi_folder_users = <DATA_APID_RHI_FOLDER_USERS>
       data_apid_amex_folder_users = <DATA_APID_AMEX_FOLDER_USERS>
       data_apid_handm_folder_users = <DATA_APID_HANDM_FOLDER_USERS>
       data_apid_opts_folder_users = <DATA_APID_OPTS_FOLDER_USERS>
-      
+      # ------------------------------------------
+
       from kubernetes import client
       from kubespawner.utils import get_k8s_model
       from kubernetes.client.models import ( V1Volume, V1VolumeMount )

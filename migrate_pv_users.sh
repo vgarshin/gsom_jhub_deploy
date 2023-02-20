@@ -1,3 +1,5 @@
+#!/bin/bash
+
 while read line; do
   echo "* * * * * * * * * * * * * * * * * *"
   echo "Start user ${line} PV copying......"
