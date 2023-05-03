@@ -74,15 +74,17 @@ singleuser:
 #  defaultUrl: "/lab"
 # ==========================================
 # timeout to user's server start
-  startTimeout: 450
+  startTimeout: 600
 # ==========================================
 # 5 users per node config
   cpu:
     limit: 3
-    guarantee: 3
+    guarantee: 2
   memory:
     limit: 10G
-    guarantee: 10G
+    guarantee: 8G
+  nodeSelector:
+    NODETYPE: CPU
 # ==========================================
 # 3 users per node config
 #  cpu:
@@ -103,9 +105,9 @@ singleuser:
       description: "Jupyter and PySpark image with S3 access."
       kubespawner_override:
         image: cr.yandex/crptfs8246iv37ojkorv/mibapysparks3:20220204v0
-        cpu_guarantee: 5
+        cpu_guarantee: 3
         cpu_limit: 5
-        mem_guarantee: 16G
+        mem_guarantee: 10G
         mem_limit: 16G
     - display_name: "R environment"
       description: "Popular packages from the R ecosystem."
@@ -149,9 +151,9 @@ singleuser:
       description: "Airflow platform for the local experiments."
       kubespawner_override:
         image: cr.yandex/crptfs8246iv37ojkorv/mibaairflow:20220316v0
-        cpu_guarantee: 4
+        cpu_guarantee: 3
         cpu_limit: 4
-        mem_guarantee: 12G
+        mem_guarantee: 10G
         mem_limit: 12G
         lifecycle_hooks:
           postStart:
@@ -172,10 +174,10 @@ singleuser:
       description: "Hadoop mini-cluster with Map-Reduce operations and standalone Spark."
       kubespawner_override:
         image: cr.yandex/crptfs8246iv37ojkorv/mibahdpsa:20211218v0
-        cpu_guarantee: 5
-        cpu_limit: 5
-        mem_guarantee: 16G
-        mem_limit: 16G
+        cpu_guarantee: 3
+        cpu_limit: 4
+        mem_guarantee: 10G
+        mem_limit: 12G
         lifecycle_hooks:
           postStart:
             exec:
@@ -255,9 +257,9 @@ hub:
       #  CREDS = json.load(file)
       
       CREDS = {
-        "tenant_id": "<TENANT_ID>",
-        "client_id": "<CLIENT_ID>",
-        "client_secret": "<CLIENT_SECRET>"
+        'tenant_id': '<TENANT_ID>',
+        'client_id': '<CLIENT_ID>',
+        'client_secret': '<CLIENT_SECRET>'
       }
 
       c.JupyterHub.authenticator_class = MibaAzureAdOAuthenticator
@@ -296,7 +298,7 @@ hub:
               }
             ])
             spawner.profile_list = list({x['display_name']:x for x in spawner.profile_list}.values())
-            spawner.log.info(f"Spawning sever for {username} with advanced configuration option")
+            spawner.log.info(f'Spawning sever for {username} with advanced configuration option')
           
           # Spark advanced hardware
           if (username in <ADVANCED_HW_USERS_SPARK>):
@@ -320,10 +322,36 @@ hub:
               }
             ])
             spawner.profile_list = list({x['display_name']:x for x in spawner.profile_list}.values())
+            spawner.log.info(f'Spawning sever for {username} with advanced configuration option')
+
+          # GPU advanced hardware
+          if (username in <ADVANCED_HW_USERS_GPU>):
+            cpu_limit = 4
+            mem_limit = '8G'
+            cpu_guarantee = 2
+            mem_guarantee = '4G'
+            spawner.profile_list.extend([
+              {
+                'display_name': 'GPU environment (advanced)',
+                'description': f'GPU  test hardware: 1 GPU / {cpu_limit} CPU / {mem_limit} RAM.',
+                'slug': 'gpu-environment-adv',
+                'kubespawner_override':
+                  {
+                    'image': 'cr.yandex/crptfs8246iv37ojkorv/mibadsai:20221115v1',
+                    'cpu_limit': cpu_limit,
+                    'cpu_guarantee': cpu_guarantee,
+                    'mem_limit': mem_limit,
+                    'mem_guarantee': mem_guarantee,
+                    'extra_resource_limits': {'nvidia.com/gpu': '1'},
+                    'node_selector': {'NODETYPE': 'GPU'}
+                  }
+              }
+            ])
+            spawner.profile_list = list({x['display_name']:x for x in spawner.profile_list}.values())
             spawner.log.info(f"Spawning sever for {username} with advanced configuration option")
 
         except Exception as e:
-          spawner.log.info(f"Exception in user {username} advanced configuration option: " + str(e))
+          spawner.log.info(f'Exception in user {username} advanced configuration option: ' + str(e))
           pass
         return spawner._options_form_default()
 
@@ -334,9 +362,9 @@ hub:
       #async def miba_pre_spawn_hook(spawner):
       #  username = spawner.user.name
       #  if (username in <ADVANCED_HW_USERS>):
-      #    spawner.log.info(f"Spawning sever for {username} with advanced configuration")
+      #    spawner.log.info(f'Spawning sever for {username} with advanced configuration')
       #    spawner.cpu_limit = 7
-      #    spawner.mem_limit = "28G"
+      #    spawner.mem_limit = '28G'
       #c.KubeSpawner.pre_spawn_hook = miba_pre_spawn_hook
 
       # ==========================================
@@ -346,64 +374,7 @@ hub:
         'mountPath': '/home/jovyan/__DATA'
       }
       data_folder_users = <DATA_FOLDER_USERS>
-      # -------------- projects ------------------
-      mnt_prj_opts_data = {
-        'name': 'jupyterhub-prj-opts-data',
-        'pvc': 'jupyterhub-prj-opts-data-pvc',
-        'mountPath': '/home/jovyan/__OPTIONS'
-      }
-      mnt_prj_sites_data = {
-        'name': 'jupyterhub-prj-sites-data',
-        'pvc': 'jupyterhub-prj-sites-data-pvc',
-        'mountPath': '/home/jovyan/__PLATFORM'
-      }
-      mnt_prj_numai_data = {
-        'name': 'jupyterhub-prj-numai-data',
-        'pvc': 'jupyterhub-prj-numai-data-pvc',
-        'mountPath': '/home/jovyan/__NUMAI'
-      }
-      mnt_apid_sts_data = {
-        'name': 'jupyterhub-apid-sts-data',
-        'pvc': 'jupyterhub-apid-sts-data-pvc',
-        'mountPath': '/home/jovyan/__VK'
-      }
-      data_prj_opts_folder_users = <DATA_PRJ_OPTS_FOLDER_USERS>
-      data_prj_sites_folder_users = <DATA_PRJ_SITES_FOLDER_USERS>
-      data_prj_numai_folder_users = <DATA_PRJ_NUMAI_FOLDER_USERS>
-      data_apid_sts_folder_users = <DATA_APID_STS_FOLDER_USERS>
-      # ------------- APID course ----------------
-      mnt_apid_books_data = {
-        'name': 'jupyterhub-apid-books-data',
-        'pvc': 'jupyterhub-apid-books-data-pvc',
-        'mountPath': '/home/jovyan/__BOOKS'
-      }
-      mnt_apid_rhi_data = {
-        'name': 'jupyterhub-apid-rhi-data',
-        'pvc': 'jupyterhub-apid-rhi-data-pvc',
-        'mountPath': '/home/jovyan/__RHI'
-      }
-      mnt_apid_amex_data = {
-        'name': 'jupyterhub-apid-amex-data',
-        'pvc': 'jupyterhub-apid-amex-data-pvc',
-        'mountPath': '/home/jovyan/__AMEX'
-      }
-      mnt_apid_handm_data = {
-        'name': 'jupyterhub-apid-handm-data',
-        'pvc': 'jupyterhub-apid-handm-data-pvc',
-        'mountPath': '/home/jovyan/__HANDM'
-      }
-      mnt_apid_opts_data = {
-        'name': 'jupyterhub-apid-opts-data',
-        'pvc': 'jupyterhub-apid-opts-data-pvc',
-        'mountPath': '/home/jovyan/__OPTS'
-      }
-      data_apid_books_folder_users = <DATA_APID_BOOKS_FOLDER_USERS>
-      data_apid_rhi_folder_users = <DATA_APID_RHI_FOLDER_USERS>
-      data_apid_amex_folder_users = <DATA_APID_AMEX_FOLDER_USERS>
-      data_apid_handm_folder_users = <DATA_APID_HANDM_FOLDER_USERS>
-      data_apid_opts_folder_users = <DATA_APID_OPTS_FOLDER_USERS>
-      # ------------------------------------------
-
+      
       from kubernetes import client
       from kubespawner.utils import get_k8s_model
       from kubernetes.client.models import ( V1Volume, V1VolumeMount )
@@ -428,161 +399,27 @@ hub:
                 'readOnly': read_only_flag
             })
           )
-          # mount PROJECT-1 folder
-          if user in data_prj_opts_folder_users:
-            pod.spec.volumes.append(
-              get_k8s_model(V1Volume, {
-                'name' : mnt_prj_opts_data['name'],
-                'persistentVolumeClaim': {
-                  'claimName': mnt_prj_opts_data['pvc']
-                }
-              })
-            )
-            pod.spec.containers[0].volume_mounts.append(
-              get_k8s_model(V1VolumeMount, {
-                'name' : mnt_prj_opts_data['name'],
-                'mountPath' : mnt_prj_opts_data['mountPath'],
-                'readOnly': False
-              })
-            )
-          # mount PROJECT-2 folder
-          if user in data_prj_sites_folder_users:
-            pod.spec.volumes.append(
-              get_k8s_model(V1Volume, {
-                'name' : mnt_prj_sites_data['name'],
-                'persistentVolumeClaim': {
-                  'claimName': mnt_prj_sites_data['pvc']
-                }
-              })
-            )
-            pod.spec.containers[0].volume_mounts.append(
-              get_k8s_model(V1VolumeMount, {
-                'name' : mnt_prj_sites_data['name'],
-                'mountPath' : mnt_prj_sites_data['mountPath'],
-                'readOnly': False
-              })
-            )
-          # mount PROJECT-3 folder
-          if user in data_prj_numai_folder_users:
-            pod.spec.volumes.append(
-              get_k8s_model(V1Volume, {
-                'name' : mnt_prj_numai_data['name'],
-                'persistentVolumeClaim': {
-                  'claimName': mnt_prj_numai_data['pvc']
-                }
-              })
-            )
-            pod.spec.containers[0].volume_mounts.append(
-              get_k8s_model(V1VolumeMount, {
-                'name' : mnt_prj_numai_data['name'],
-                'mountPath' : mnt_prj_numai_data['mountPath'],
-                'readOnly': False
-              })
-            )
-          # mount APID-1 folder
-          if user in data_apid_books_folder_users:
-            pod.spec.volumes.append(
-              get_k8s_model(V1Volume, {
-                'name' : mnt_apid_books_data['name'],
-                'persistentVolumeClaim': {
-                  'claimName': mnt_apid_books_data['pvc']
-                }
-              })
-            )
-            pod.spec.containers[0].volume_mounts.append(
-              get_k8s_model(V1VolumeMount, {
-                'name' : mnt_apid_books_data['name'],
-                'mountPath' : mnt_apid_books_data['mountPath'],
-                'readOnly': False
-              })
-            )
-          # mount APID-2 folder
-          if user in data_apid_sts_folder_users:
-            pod.spec.volumes.append(
-              get_k8s_model(V1Volume, {
-                'name' : mnt_apid_sts_data['name'],
-                'persistentVolumeClaim': {
-                  'claimName': mnt_apid_sts_data['pvc']
-                }
-              })
-            )
-            pod.spec.containers[0].volume_mounts.append(
-              get_k8s_model(V1VolumeMount, {
-                'name' : mnt_apid_sts_data['name'],
-                'mountPath' : mnt_apid_sts_data['mountPath'],
-                'readOnly': False
-              })
-            )
-          # mount APID-3 folder
-          if user in data_apid_rhi_folder_users:
-            pod.spec.volumes.append(
-              get_k8s_model(V1Volume, {
-                'name' : mnt_apid_rhi_data['name'],
-                'persistentVolumeClaim': {
-                  'claimName': mnt_apid_rhi_data['pvc']
-                }
-              })
-            )
-            pod.spec.containers[0].volume_mounts.append(
-              get_k8s_model(V1VolumeMount, {
-                'name' : mnt_apid_rhi_data['name'],
-                'mountPath' : mnt_apid_rhi_data['mountPath'],
-                'readOnly': False
-              })
-            )
-          # mount APID-4 folder
-          if user in data_apid_amex_folder_users:
-            pod.spec.volumes.append(
-              get_k8s_model(V1Volume, {
-                'name' : mnt_apid_amex_data['name'],
-                'persistentVolumeClaim': {
-                  'claimName': mnt_apid_amex_data['pvc']
-                }
-              })
-            )
-            pod.spec.containers[0].volume_mounts.append(
-              get_k8s_model(V1VolumeMount, {
-                'name' : mnt_apid_amex_data['name'],
-                'mountPath' : mnt_apid_amex_data['mountPath'],
-                'readOnly': False
-              })
-            )
-          # mount APID-5 folder
-          if user in data_apid_handm_folder_users:
-            pod.spec.volumes.append(
-              get_k8s_model(V1Volume, {
-                'name' : mnt_apid_handm_data['name'],
-                'persistentVolumeClaim': {
-                  'claimName': mnt_apid_handm_data['pvc']
-                }
-              })
-            )
-            pod.spec.containers[0].volume_mounts.append(
-              get_k8s_model(V1VolumeMount, {
-                'name' : mnt_apid_handm_data['name'],
-                'mountPath' : mnt_apid_handm_data['mountPath'],
-                'readOnly': False
-              })
-            )
-          # mount APID-6 folder
-          if user in data_apid_opts_folder_users:
-            pod.spec.volumes.append(
-              get_k8s_model(V1Volume, {
-                'name' : mnt_apid_opts_data['name'],
-                'persistentVolumeClaim': {
-                  'claimName': mnt_apid_opts_data['pvc']
-                }
-              })
-            )
-            pod.spec.containers[0].volume_mounts.append(
-              get_k8s_model(V1VolumeMount, {
-                'name' : mnt_apid_opts_data['name'],
-                'mountPath' : mnt_apid_opts_data['mountPath'],
-                'readOnly': False
-              })
-            )
+          # mount PROJECTS folders
+          data_projects_users = <DATA_PROJECTS_USERS>
+          for prj in data_projects_users:
+            if user in prj['users']:
+              pod.spec.volumes.append(
+                get_k8s_model(V1Volume, {
+                  'name' : 'jupyterhub-{}-data'.format(prj['name']),
+                  'persistentVolumeClaim': {
+                    'claimName': 'jupyterhub-{}-data-pvc'.format(prj['name'])
+                  }
+                })
+              )
+              pod.spec.containers[0].volume_mounts.append(
+                get_k8s_model(V1VolumeMount, {
+                  'name' : 'jupyterhub-{}-data'.format(prj['name']),
+                  'mountPath' : '/home/jovyan/{}'.format(prj['path']),
+                  'readOnly': False
+                })
+              )
         except Exception as e:
-          spawner.log.info("Exception in shared-mounts: " + str(e))
+          spawner.log.info('Exception in shared-mounts: ' + str(e))
           pass
         return pod
       c.KubeSpawner.modify_pod_hook = modify_pod_hook
