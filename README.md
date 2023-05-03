@@ -9,6 +9,8 @@ You also may find [The Zero to JupyterHub with Kubernetes guide](https://zero-to
 
 ## Cloud environment setup
 
+### VK cloud
+
 Kubernetes cluster must be created as a first step to deploy JupyterHub. The process how to create cluster at [MCS](https://mcs.mail.ru/) is decribed in [MCS Kubernetes manual](https://mcs.mail.ru/help/ru_RU/k8s-start/create-k8s/).
 
 Recommended parameters of a cluster are as follows:
@@ -18,6 +20,16 @@ Recommended parameters of a cluster are as follows:
 Note that for a node group there should be autoscaling enable with node number up to 100 (10 recommended).
 
 There will be a configuration file `<filename>.yaml` available after the cluster is created. You will need this file in order to get access to the cluster.
+
+### Yandex.Cloud
+
+Create Managed Kubernetes cluster as it is described in the [manual](https://cloud.yandex.com/en-ru/docs/managed-kubernetes/quickstart). 
+
+Recommended parameters of a cluster are as follows:
+- node group of virtual machines with: 16 vCPU / 64 GB RAM / 96 GB disk space (SSD type recommended) and label `NODETYPE: CPU` for regular CPU based tasks
+- node group of virtual machines with: 4 vCPU / 16 GB RAM / 96 GB disk space (SSD type recommended) / 1 NVIDIA® Tesla® T4 and label `NODETYPE: ПPU` for GPU based tasks
+
+Note that Yandex Managed Kubernetes does not require master node, but for a node group there should be autoscaling enable with node number up to 10 (recommended).
 
 ## Installation
 
