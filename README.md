@@ -138,9 +138,9 @@ where:
 - `<list_of_users_2>` is a list of users' logins (e.g. `["user_name1","stXXXXXX","stYYYYYY","stZZZZZZ"]` with no spaces between!) who can access to advanced configuration with more GPU nodes
 - `<list_of_users_3>` is a list of users' logins (e.g. `["user_name1","stXXXXXX","stYYYYYY","stZZZZZZ"]` with no spaces between!) who can access to advanced Apache Spark configuration with more CPUs and RAM
 - `<list_of_users_4>` is a list of users' logins (e.g. `["user_name2","stAAAAAA","stBBBBBB","stCCCCCC"]` with no spaces between!) who can write to `__DATA` folder, other users can only read
-- `<list_of_projects> ` has floowing structure `[{"name":"<NAME_OF_PROJECT>","path":"<PATH_TO_MOUNT>","users":<LIST_OF_USERS>},{...},...]`
+- `<list_of_projects> ` has following structure `[{"name":"<NAME_OF_PROJECT>","path":"<PATH_TO_MOUNT>","users":<LIST_OF_USERS>},{...},...]`, where `<NAME_OF_PROJECT>` is name of PVC to mount, `<PATH_TO_MOUNT>` is name of path to mount PVC for users in Jupyter single user server, `<LIST_OF_USERS>` is a list of users' logins (e.g. `["user_name1","stXXXXXX","stYYYYYY","stZZZZZZ"]` with no spaces between!)
 4. Run `installjhub.sh` script to start installation process.
-5. Run `kubectl -n jhubsir describe svc proxy-public` to get public IP address and register that address for `jhas01.gsom.spbu.ru` domain name.
+5. Run `kubectl -n jhub describe svc proxy-public` (VK cloud) or web console of the cluster (Yandex.Cloud) to get public IP address and register that address for `jhas01.gsom.spbu.ru` domain name.
 6. After some time go to login JupyterHub page https://jhas01.gsom.spbu.ru to start work.
 
 ## Monitoring
