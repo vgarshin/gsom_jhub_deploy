@@ -86,6 +86,8 @@ yc managed-kubernetes cluster get-credentials simba-kjh-01 --external
 It is recommended to follow [the documentation](https://zero-to-jupyterhub.readthedocs.io/en/latest/kubernetes/setup-helm.html):
 ```
 curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+helm repo add jupyterhub https://jupyterhub.github.io/helm-chart/
+helm repo update
 ```
 Check if `Helm` is installed:
 ```
@@ -104,27 +106,39 @@ In order to start JupyterHub in a configuration for GSOM students you should do 
 
 With a cluster available, `kubectl` and  `Helm` installed, you can install JupyterHub with [the following commands](https://zero-to-jupyterhub.readthedocs.io/en/latest/jupyterhub/installation.html) below. The process is based on the manual recomendations but with some additions.
 
-1. Clone this repository `git clone https://github.com/vgarshin/gsom_jhub_deploy` to the folder with `<filename>.yaml` file.
+1. Clone this repository `git clone https://github.com/vgarshin/gsom_jhub_deploy` to the folder with `<filename>.yaml` file (VK cloud) or new folder (Yandex.Cloud).
 2. Create file e.g. with `nano mibacreds.txt` command.
 3. Put all secrets to `mibacreds.txt` file in the following way:
 ```
 SECRET_TOKEN <secret_token>
-CLICKHOUSE_PASSWORD <click_password>
-POSTGRESQL_PASSWORD <postgresql_password>
+CONTAINER_REGISTRY_PASSWORD <registry_token>
+HOST_NAME <host_name>
+CLICKHOUSE_LOGIN <ch_user>
+CLICKHOUSE_PASSWORD <ch_password>
+POSTGRESQL_LOGIN <pg_user>
+POSTGRESQL_PASSWORD <pg_password>
 TENANT_ID <tenant_id>
 CLIENT_ID <client_id>
 CLIENT_SECRET <client_secret>
 JUPYTERHUB_ADMIN <admin_name>
-ADVANCED_HW_USERS <list_of_users_1>
-DATA_FOLDER_USERS <list_of_users_2>
+ADVANCED_HW_USERS_DS <list_of_users_1>
+ADVANCED_HW_USERS_GPU <list_of_users_2>
+ADVANCED_HW_USERS_SPARK <list_of_users_3>
+DATA_FOLDER_USERS <list_of_users_4>
+DATA_PROJECTS_USERS <list_of_projects>
 ```
 where:
--  `<secret_token>` can be generated with `openssl rand -hex 32` command
--  `<click_password>` and `<postgresql_password>` are passwords for databases (not necessary for this step, can be omitted)
--  `<tenant_id>`, `<client_id>`, `<client_secret>` are credentials for Azure AD authentification
--  `<admin_name>` is for admin user to manage JupyterHub in web interface
--  `<list_of_users_1>` is a list of users' logins (e.g. `["user_name1","stXXXXXX","stYYYYYY","stZZZZZZ"]` with no spaces between!) who can access to advanced configuration with more CPUs and RAM
--  `<list_of_users_2>` is a list of users' logins (e.g. `["user_name2","stAAAAAA","stBBBBBB","stCCCCCC"]` with no spaces between!) who can write to `__DATA` folder, other users can only read
+- `<secret_token>` can be generated with `openssl rand -hex 32` command
+- `<registry_token>` for the access to conteiner registry, can be OAuth token
+- `<host_name>` domain name e.g. `jhas01.gsom.spbu.ru`
+- `<ch_user>` and `<ch_password>`, `<pg_user>` and `<postgresql_password>` are user names and passwords for databases (not necessary for this step, can be omitted)
+- `<tenant_id>`, `<client_id>`, `<client_secret>` are credentials for Azure AD authentification
+- `<admin_name>` is for admin user to manage JupyterHub in web interface
+- `<list_of_users_1>` is a list of users' logins (e.g. `["user_name1","stXXXXXX","stYYYYYY","stZZZZZZ"]` with no spaces between!) who can access to advanced Data Science configuration with more CPUs and RAM
+- `<list_of_users_2>` is a list of users' logins (e.g. `["user_name1","stXXXXXX","stYYYYYY","stZZZZZZ"]` with no spaces between!) who can access to advanced configuration with more GPU nodes
+- `<list_of_users_3>` is a list of users' logins (e.g. `["user_name1","stXXXXXX","stYYYYYY","stZZZZZZ"]` with no spaces between!) who can access to advanced Apache Spark configuration with more CPUs and RAM
+- `<list_of_users_4>` is a list of users' logins (e.g. `["user_name2","stAAAAAA","stBBBBBB","stCCCCCC"]` with no spaces between!) who can write to `__DATA` folder, other users can only read
+- `<list_of_projects> ` has floowing structure `[{"name":"<NAME_OF_PROJECT>","path":"<PATH_TO_MOUNT>","users":<LIST_OF_USERS>},{...},...]`
 4. Run `installjhub.sh` script to start installation process.
 5. Run `kubectl -n jhubsir describe svc proxy-public` to get public IP address and register that address for `jhas01.gsom.spbu.ru` domain name.
 6. After some time go to login JupyterHub page https://jhas01.gsom.spbu.ru to start work.
