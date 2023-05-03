@@ -57,6 +57,9 @@ curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add
 sudo bash -c 'echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" > /etc/apt/sources.list.d/kubernetes.list'
 sudo apt-get update && sudo apt-get install -y kubectl
 ```
+
+#### VK cloud
+
 After install process finishes you will need `<filename>.yaml` uploaded to the host with `kubectl` client:
 ```
 export KUBECONFIG=~/<filename>.yaml
@@ -69,6 +72,13 @@ Setting the correct permissions for `<filename>.yaml`:
 ```
 chmod g-r arkh-kjh-01_kubeconfig.yaml
 chmod o-r arkh-kjh-01_kubeconfig.yaml
+```
+
+#### Yandex.Cloud
+
+Get access to cluster with:
+```shell
+yc managed-kubernetes cluster get-credentials simba-kjh-01 --external
 ```
 
 ### STEP 2. Install Helm
