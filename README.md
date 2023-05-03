@@ -23,13 +23,34 @@ There will be a configuration file `<filename>.yaml` available after the cluster
 
 ### Yandex.Cloud
 
+At the first step ypu willneed to create a bridge virtual machine to manage cluster with [Yandex Cloud CLI](https://cloud.yandex.ru/docs/cli/). Then you will need to install Yandex CLI client:
+```shell
+$ curl https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
+$ reboot
+$ yc init
+```
+
+### CLI info commands
+$ yc config list
+$ yc managed-kubernetes cluster list
+
+
+### install kubectl client
+$ sudo apt-get update && sudo apt-get install -y apt-transport-https
+$ curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+$ sudo bash -c 'echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" > /etc/apt/sources.list.d/kubernetes.list'
+$ sudo apt-get update && sudo apt-get install -y kubectl
+$ kubectl get pod --all-namespaces
+
 Create Managed Kubernetes cluster as it is described in the [manual](https://cloud.yandex.com/en-ru/docs/managed-kubernetes/quickstart). 
 
 Recommended parameters of a cluster are as follows:
 - node group of virtual machines with: 16 vCPU / 64 GB RAM / 96 GB disk space (SSD type recommended) and label `NODETYPE: CPU` for regular CPU based tasks
-- node group of virtual machines with: 4 vCPU / 16 GB RAM / 96 GB disk space (SSD type recommended) / 1 NVIDIA® Tesla® T4 and label `NODETYPE: ПPU` for GPU based tasks
+- (extra) node group of virtual machines with: 4 vCPU / 16 GB RAM / 96 GB disk space (SSD type recommended) / 1 NVIDIA® Tesla® T4 and label `NODETYPE: GPU` for GPU based tasks
 
 Note that Yandex Managed Kubernetes does not require master node, but for a node group there should be autoscaling enable with node number up to 10 (recommended).
+
+
 
 ## Installation
 
