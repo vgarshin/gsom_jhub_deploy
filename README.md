@@ -25,22 +25,18 @@ There will be a configuration file `<filename>.yaml` available after the cluster
 
 At the first step ypu willneed to create a bridge virtual machine to manage cluster with [Yandex Cloud CLI](https://cloud.yandex.ru/docs/cli/). Then you will need to install Yandex CLI client:
 ```shell
-$ curl https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
-$ reboot
-$ yc init
+curl https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
+reboot
+yc init
 ```
-
-### CLI info commands
-$ yc config list
-$ yc managed-kubernetes cluster list
-
-
-### install kubectl client
-$ sudo apt-get update && sudo apt-get install -y apt-transport-https
-$ curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-$ sudo bash -c 'echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" > /etc/apt/sources.list.d/kubernetes.list'
-$ sudo apt-get update && sudo apt-get install -y kubectl
-$ kubectl get pod --all-namespaces
+Base CLI info commands:
+```shell
+yc config list
+yc managed-kubernetes cluster list
+```
+Next steps are to create new resources like:
+- network e.g. `simba-network-01`
+- service account e.g. `simba-service-account` with roles `editor`, `container-registry.images.puller`
 
 Create Managed Kubernetes cluster as it is described in the [manual](https://cloud.yandex.com/en-ru/docs/managed-kubernetes/quickstart). 
 
@@ -50,14 +46,12 @@ Recommended parameters of a cluster are as follows:
 
 Note that Yandex Managed Kubernetes does not require master node, but for a node group there should be autoscaling enable with node number up to 10 (recommended).
 
-
-
 ## Installation
 
 ### STEP 1. Install kubectl
 
 You may use the [manual](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/) that offers following steps:
-```
+```shell
 sudo apt-get update && sudo apt-get install -y apt-transport-https
 curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
 sudo bash -c 'echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" > /etc/apt/sources.list.d/kubernetes.list'
