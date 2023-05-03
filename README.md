@@ -42,7 +42,7 @@ Create Managed Kubernetes cluster as it is described in the [manual](https://clo
 
 Recommended parameters of a cluster are as follows:
 - node group of virtual machines with: 16 vCPU / 64 GB RAM / 96 GB disk space (SSD type recommended) and label `NODETYPE: CPU` for regular CPU based tasks
-- (extra) node group of virtual machines with: 4 vCPU / 16 GB RAM / 96 GB disk space (SSD type recommended) / 1 NVIDIA® Tesla® T4 and label `NODETYPE: GPU` for GPU based tasks
+- (optionally) node group of virtual machines with: 4 vCPU / 16 GB RAM / 96 GB disk space (SSD type recommended) / 1 NVIDIA® Tesla® T4 and label `NODETYPE: GPU` for GPU based tasks
 
 Note that Yandex Managed Kubernetes does not require master node, but for a node group there should be autoscaling enable with node number up to 10 (recommended).
 
@@ -145,10 +145,16 @@ where:
 
 ## Monitoring
 
-To get access to MCS Kubernetes dashboard follow the instructions from [MCS manual](https://mcs.mail.ru/help/ru_RU/k8s-start/k8s-dashboard) and run the command:
+### VK Cloud
+
+To get access to VK Cloud Kubernetes dashboard follow the instructions from [MCS manual](https://mcs.mail.ru/help/ru_RU/k8s-start/k8s-dashboard) and run the command:
 ```
 kubectl proxy
 ```
+
+### Yandex.Cloud
+
+Use web console interface to control Managed Kubernetes cluster.
 
 You also may want to monitor health or debug the claster with the list of commands in the table below. They might be useful to discover basic troubles with the JupyterHub and the Kubernetes cluster:
 
@@ -180,7 +186,14 @@ Current installation already offers a few environments:
 - Data Science environment
 - Spark environment
 - R environment
+- PostgreSQL environment
+- MongoDB environment
+- Airflow environment
+- Hadoop (with YARN) and Spark environment
 - Minimal Python environment
+- (optionally) DataScience environment (advanced)
+- (optionally) Spark environment (advanced)
+- (optionally) GPU environment (advanced)
 
 All of the images for environments are taken or inherited from the [Jupyter docker stack collection](https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html).
 
@@ -198,7 +211,6 @@ sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubun
 sudo apt-get update
 sudo apt-get install docker-ce docker-ce-cli containerd.io
 ```
-
 In order to create a new environment you need to create a [Dockerfile](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/) first:
 ```
 mkdir dockerfiledsai
@@ -213,7 +225,13 @@ sudo docker tag mibadsai <docker_id>/<image_name>:<image_tag>
 sudo docker login
 sudo docker push <docker_id>/<image_name>:<image_tag>
 ```
-
+You may also use [Yandex Container Registry](https://cloud.yandex.ru/docs/container-registry/):
+```shell
+sudo docker pull <docker_id>/<image_name>:<image_tag>
+sudo docker tag <docker_id>/<image_name>:<image_tag> cr.yandex/crptfs8246iv37ojkorv/<image_name>:<image_tag>
+sudo docker login --username oauth --password <OAUTH_TOKEN> cr.yandex
+sudo docker push cr.yandex/crptfs8246iv37ojkorv/mibadsai:20211206v0
+```
 You also need to edit [config file](https://github.com/vgarshin/gsom_jhub_deploy/blob/master/mibaconfig.yaml):
 ```
 image:
@@ -221,6 +239,14 @@ image:
   tag: <image_tag>
 ```
 ...and upgrade JupyterHub by running the script `./upgradejhub.sh`.
+
+## Shared folder
+
+TBD
+
+## Logging
+
+TBD
 
 ## Troubleshooting
 
