@@ -1,11 +1,13 @@
 # GSOM JupyterHub: deploy and maintenance
 Manual for Zero to JupyterHub with Kubernetes Deploy
 
+
 ## Introduction
 
 This manual will get you through installation process of [JupyterHub for Kubernetes](https://github.com/jupyterhub/zero-to-jupyterhub-k8s/) on a cloud using [Kubernetes](https://kubernetes.io/) with [Helm](https://helm.sh/) and JupyterHub customization for use in [MiBA program](https://gsom.spbu.ru/en/programmes/graduate/miba/) technology oriented courses.
 
 You also may find [The Zero to JupyterHub with Kubernetes guide](https://zero-to-jupyterhub.readthedocs.io/) for detais and it  is complemented well by the documentation for [JupyterHub](https://jupyterhub.readthedocs.io/).
+
 
 ## Cloud environment setup
 
@@ -45,6 +47,7 @@ Recommended parameters of a cluster are as follows:
 - (optionally) node group of virtual machines with: 4 vCPU / 16 GB RAM / 96 GB disk space (SSD type recommended) / 1 NVIDIA® Tesla® T4 and label `NODETYPE: GPU` for GPU based tasks
 
 Note that Yandex Managed Kubernetes does not require master node, but for a node group there should be autoscaling enable with node number up to 10 (recommended).
+
 
 ## Installation
 
@@ -100,7 +103,6 @@ In order to start JupyterHub in a configuration for GSOM students you should do 
 1. Ensure the OAuth integration with GSOM Azure AD is possible and JupyterHub application is registred in GSOM Azuse AD. As the result, you should get `<tenant_id>`,
  `<client_id>` and `<client_secret>` from AD administrator for further steps.
 2. Domaim name e.g. `jhas01.gsom.spbu.ru` is available to register.
- 
 
 ### STEP 4. Install JupyterHub
 
@@ -143,6 +145,7 @@ where:
 5. Run `kubectl -n jhub describe svc proxy-public` (VK cloud) or web console of the cluster (Yandex.Cloud) to get public IP address and register that address for `jhas01.gsom.spbu.ru` domain name.
 6. After some time go to login JupyterHub page https://jhas01.gsom.spbu.ru to start work.
 
+
 ## Monitoring
 
 ### VK Cloud
@@ -175,6 +178,7 @@ You also may want to monitor health or debug the claster with the list of comman
 | `kubectl -n jhub exec -it <pod_name> /bin/bash` | Get access to shell `/bin/bash` of the running pod (container) `<pod_name>` in `jhub` namespace |
 
 Full list of the possible `kubectl` commands can be found [in Kubernetes manual](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands).
+
 
 ## Customization
 
@@ -240,13 +244,21 @@ image:
 ```
 ...and upgrade JupyterHub by running the script `./upgradejhub.sh`.
 
+
 ## Shared folder
 
 TBD
 
+
 ## Logging
 
 TBD
+
+
+## Force drain
+
+TBD
+
 
 ## Troubleshooting
 
