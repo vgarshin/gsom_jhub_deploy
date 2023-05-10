@@ -12,14 +12,14 @@ scheduling:
 # This priority mechanism allows us to add dummy users or user-placeholders 
 # with low priority that can take up resources until a real user with 
 # (higher priority) requires it. 
-#  podPriority:
-#    enabled: true
-#    globalDefault: true
-#    defaultPriority: 10
-#    userPlaceholderPriority: 0
-#  userPlaceholder:
-#    enabled: true
-#    replicas: 2
+  podPriority:
+    enabled: true
+    globalDefault: true
+    defaultPriority: 10
+    userPlaceholderPriority: 0
+  userPlaceholder:
+    enabled: true
+    replicas: 2
 # ==========================================
 # The user scheduler’s only task is to schedule new user pods to the most utilized node.
   userScheduler:
@@ -54,14 +54,13 @@ singleuser:
     postStart:
       exec:
         command:
-          - "sh"
+          - "bash"
           - "-c"
           - >
-            cd /tmp;
-            git clone https://github.com/vgarshin/gsom_jhub_manual;
+            git clone https://github.com/vgarshin/gsom_jhub_manual /tmp/manual;
             mkdir -p /home/jovyan/__MANUAL;
             rm -r /home/jovyan/__MANUAL/*;
-            mv -f /tmp/gsom_jhub_manual/* /home/jovyan/__MANUAL
+            mv -f /tmp/manual/* /home/jovyan/__MANUAL
 # ==========================================
 # local DBs creds
   extraEnv:
@@ -99,15 +98,15 @@ singleuser:
     tag: 20221115v1
   profileList:
     - display_name: "Data Science environment"
-      description: "All libraries for MiBA courses and labs."
+      description: "All libraries for Data Science courses and labs."
       default: true
     - display_name: "Spark environment"
       description: "Jupyter and PySpark image with S3 access."
       kubespawner_override:
         image: cr.yandex/crptfs8246iv37ojkorv/mibapysparks3:20220204v0
-        cpu_guarantee: 3
+        cpu_guarantee: 4
         cpu_limit: 5
-        mem_guarantee: 10G
+        mem_guarantee: 12G
         mem_limit: 16G
     - display_name: "R environment"
       description: "Popular packages from the R ecosystem."
@@ -121,15 +120,14 @@ singleuser:
           postStart:
             exec:
               command:
-                - "sh"
+                - "bash"
                 - "-c"
                 - >
                   echo redspot | sudo -S service postgresql start;
-                  cd /tmp;
-                  git clone https://github.com/vgarshin/gsom_jhub_manual;
+                  git clone https://github.com/vgarshin/gsom_jhub_manual /tmp/manual;
                   mkdir -p /home/jovyan/__MANUAL;
                   rm -r /home/jovyan/__MANUAL/*;
-                  mv -f /tmp/gsom_jhub_manual/* /home/jovyan/__MANUAL
+                  mv -f /tmp/manual/* /home/jovyan/__MANUAL
     - display_name: "MongoDB environment"
       description: "Demo MongoDB database for the local experiments."
       kubespawner_override:
@@ -138,15 +136,14 @@ singleuser:
           postStart:
             exec:
               command:
-                - "sh"
+                - "bash"
                 - "-c"
                 - >
                   echo redspot | sudo -S mongod --dbpath /var/lib/mongo --logpath /var/log/mongodb/mongod.log --fork;
-                  cd /tmp;
-                  git clone https://github.com/vgarshin/gsom_jhub_manual;
+                  git clone https://github.com/vgarshin/gsom_jhub_manual /tmp/manual;
                   mkdir -p /home/jovyan/__MANUAL;
                   rm -r /home/jovyan/__MANUAL/*;
-                  mv -f /tmp/gsom_jhub_manual/* /home/jovyan/__MANUAL
+                  mv -f /tmp/manual/* /home/jovyan/__MANUAL
     - display_name: "Airflow environment"
       description: "Airflow platform for the local experiments."
       kubespawner_override:
@@ -159,15 +156,14 @@ singleuser:
           postStart:
             exec:
               command:
-                - "sh"
+                - "bash"
                 - "-c"
                 - >
                   echo redspot | sudo -S service postgresql start;
-                  cd /tmp;
-                  git clone https://github.com/vgarshin/gsom_jhub_manual;
+                  git clone https://github.com/vgarshin/gsom_jhub_manual /tmp/manual;
                   mkdir -p /home/jovyan/__MANUAL;
                   rm -r /home/jovyan/__MANUAL/*;
-                  mv -f /tmp/gsom_jhub_manual/* /home/jovyan/__MANUAL;
+                  mv -f /tmp/manual/* /home/jovyan/__MANUAL;
                   mkdir -p /home/jovyan/airflow;
                   yes | cp -rf /usr/local/etc/airflow/airflow.cfg /home/jovyan/airflow/
     - display_name: "Hadoop (with YARN) and Spark environment"
@@ -182,16 +178,15 @@ singleuser:
           postStart:
             exec:
               command:
-                - "sh"
+                - "bash"
                 - "-c"
                 - >
                   echo redspot | sudo -S service ssh start && sudo runuser hadoop -s /bin/bash -c "export HBASE_HOME=/usr/local/hbase && export HBASE_CONF_DIR=/usr/local/hbase/conf && export PATH=$PATH:$JAVA_HOME/bin:/usr/local/hadoop/bin:/usr/local/hadoop/sbin:/usr/local/hbase/bin:/usr/local/hbase/sbin && export APPLICATION_WEB_PROXY_BASE=user/${JUPYTERHUB_USER}/proxy/8088 && export HADOOP_HOME=/usr/local/hadoop && export HADOOP_CONF_DIR=$HADOOP_HOME/etc/hadoop && /usr/local/hadoop/bin/init/start-hadoop.sh && hdfs dfs -mkdir /jovyan && hdfs dfs -chown -R jovyan:hadoopusers /jovyan && hadoop fs -chmod -R 777 /tmp && start-hbase.sh && hdfs dfs -mkdir /user && hdfs dfs -mkdir /user/hive && hdfs dfs -mkdir /user/hive/warehouse && hdfs dfs -chmod g+w /user/hive/warehouse && hdfs dfs -chown -R jovyan:hadoopusers /user";
                   schematool -dbType derby -initSchema;
-                  cd /tmp;
-                  git clone https://github.com/vgarshin/gsom_jhub_manual;
+                  git clone https://github.com/vgarshin/gsom_jhub_manual /tmp/manual;
                   mkdir -p /home/jovyan/__MANUAL;
                   rm -r /home/jovyan/__MANUAL/*;
-                  mv -f /tmp/gsom_jhub_manual/* /home/jovyan/__MANUAL
+                  mv -f /tmp/manual/* /home/jovyan/__MANUAL
     - display_name: "Minimal Python environment"
       description: "Pure Python with some libraries and Unix man packages."
       kubespawner_override:
@@ -289,7 +284,7 @@ hub:
                 'slug': 'datascience-environment-adv',
                 'kubespawner_override':
                   {
-                    'image': 'cr.yandex/crptfs8246iv37ojkorv/mibadsai:20221115v1',
+                    'image': 'cr.yandex/crptfs8246iv37ojkorv/mibadsai:20230505v3',
                     'cpu_limit': cpu_limit,
                     'cpu_guarantee': cpu_guarantee,
                     'mem_limit': mem_limit,
@@ -313,7 +308,7 @@ hub:
                 'slug': 'spark-environment-adv',
                 'kubespawner_override':
                   {
-                    'image': 'cr.yandex/crptfs8246iv37ojkorv/mibapysparks3:20220204v0',
+                    'image': 'cr.yandex/crptfs8246iv37ojkorv/mibapysparks3:20230510v0',
                     'cpu_limit': cpu_limit,
                     'cpu_guarantee': cpu_guarantee,
                     'mem_limit': mem_limit,
@@ -337,7 +332,7 @@ hub:
                 'slug': 'gpu-environment-adv',
                 'kubespawner_override':
                   {
-                    'image': 'cr.yandex/crptfs8246iv37ojkorv/mibadsai:20221115v1',
+                    'image': 'cr.yandex/crptfs8246iv37ojkorv/mibadsai:20230505v3',
                     'cpu_limit': cpu_limit,
                     'cpu_guarantee': cpu_guarantee,
                     'mem_limit': mem_limit,
