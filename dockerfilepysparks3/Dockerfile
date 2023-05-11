@@ -1,4 +1,3 @@
-
 FROM jupyter/pyspark-notebook:spark-3.2.0
 
 # proxy for spark ui and etc

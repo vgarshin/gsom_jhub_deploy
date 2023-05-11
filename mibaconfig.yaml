@@ -169,7 +169,7 @@ singleuser:
     - display_name: "Hadoop (with YARN) and Spark environment"
       description: "Hadoop mini-cluster with Map-Reduce operations and standalone Spark."
       kubespawner_override:
-        image: cr.yandex/crptfs8246iv37ojkorv/mibahdpsa:20211218v0
+        image: cr.yandex/crptfs8246iv37ojkorv/dockerfilehdpsa:20230511v1
         cpu_guarantee: 3
         cpu_limit: 4
         mem_guarantee: 10G

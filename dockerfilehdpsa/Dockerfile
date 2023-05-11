@@ -1,4 +1,4 @@
-FROM vgarshin/mibapysparks3:20211002v1
+FROM jupyter/pyspark-notebook:spark-3.2.0
 
 USER root
 
@@ -17,7 +17,7 @@ RUN apt update && apt install -y openssh-server && \
 RUN groupadd hadoop
 RUN useradd -d /home/hadoop -g hadoop -m hadoop --shell /bin/bash
 RUN groupadd hadoopusers
-RUN useradd -g hadoopusers ${NB_UID}
+RUN usermod -a -G hadoopusers ${NB_USER}
 
 # SSH without key
 RUN mkdir /home/hadoop/.ssh
@@ -25,16 +25,16 @@ RUN ssh-keygen -t rsa -f /home/hadoop/.ssh/id_rsa -P '' && \
     cat /home/hadoop/.ssh/id_rsa.pub >> /home/hadoop/.ssh/authorized_keys
 
 # Installing Hadoop
-RUN wget http://apache.mirror.anlx.net/hadoop/common/hadoop-3.2.2/hadoop-3.2.2.tar.gz && \
-    tar -xzvf hadoop-3.2.2.tar.gz -C /usr/local/ && \
-    mv /usr/local/hadoop-3.2.2/ /usr/local/hadoop && \
-    rm hadoop-3.2.2.tar.gz
+RUN wget http://apache.mirror.anlx.net/hadoop/common/hadoop-3.2.3/hadoop-3.2.3.tar.gz && \
+    tar -xzvf hadoop-3.2.3.tar.gz -C /usr/local/ && \
+    mv /usr/local/hadoop-3.2.3/ /usr/local/hadoop && \
+    rm hadoop-3.2.3.tar.gz
 
 # HBase install
-RUN wget https://dlcdn.apache.org/hbase/stable/hbase-2.4.8-bin.tar.gz && \
-    tar -xzvf hbase-2.4.8-bin.tar.gz -C /usr/local/ && \
-    mv /usr/local/hbase-2.4.8/ /usr/local/hbase/ && \
-    rm hbase-2.4.8-bin.tar.gz
+RUN wget https://dlcdn.apache.org/hbase/stable/hbase-2.5.4-bin.tar.gz && \
+    tar -xzvf hbase-2.5.4-bin.tar.gz -C /usr/local/ && \
+    mv /usr/local/hbase-2.5.4/ /usr/local/hbase/ && \
+    rm hbase-2.5.4-bin.tar.gz
 
 # Hive install
 RUN wget https://dlcdn.apache.org/hive/hive-3.1.2/apache-hive-3.1.2-bin.tar.gz && \
@@ -121,3 +121,8 @@ RUN echo "jovyan:redspot" | chpasswd
 # =================================================================
 
 USER ${NB_UID}
+
+# proxy for spark ui and etc
+RUN pip install jupyter-server-proxy && \
+    jupyter serverextension enable --sys-prefix jupyter_server_proxy && \
+    pip install pyspark==3.2.0
