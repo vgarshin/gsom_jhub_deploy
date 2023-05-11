@@ -270,12 +270,17 @@ storage:
 
 ## Logging
 
-TBD
+Logging for the cluster is based on [the following manuals](https://cloud.yandex.com/en-ru/docs/logging/tutorials/k8s-fluent-bit-logging). The only difference is that logs are written to Object Storage for further analysis.
 
+In order to stream logs to mounted S3 bucket you will need to use `configs3.yaml` [file](https://github.com/vgarshin/gsom_jhub_deploy/blob/master/logging/configs3.yaml). Then you will have to restrt `fluentbit` with the command:
+```shell
+./fluentconf.sh
+```
+...the shell file is [here](https://github.com/vgarshin/gsom_jhub_deploy/blob/master/logging/fluentconf.sh). 
 
 ## Force drain
 
-TBD
+Force drain is neede to drain 'stuck' nodes and delete them from the cluster. It is implemented with [shell file](https://github.com/vgarshin/gsom_jhub_deploy/blob/master/hubdrain.sh) that can be scheduled as a cron job. 
 
 
 ## Troubleshooting
