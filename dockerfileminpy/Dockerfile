@@ -1,4 +1,4 @@
-FROM jupyter/minimal-notebook:latest
+FROM jupyter/minimal-notebook:python-3.10.9
 
 USER root
 
@@ -13,9 +13,7 @@ RUN apt-get update && \
     mv /usr/bin/man.REAL /usr/bin/man -f && \
     rm -r /var/lib/apt/lists/*
 
-USER $NB_UID
+USER 1000
 
 RUN pip install jupyter-server-proxy && \
     jupyter serverextension enable --sys-prefix jupyter_server_proxy
-
-RUN pip install --no-cache-dir nbgitpuller

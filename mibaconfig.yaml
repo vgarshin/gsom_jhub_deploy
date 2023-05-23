@@ -19,7 +19,7 @@ scheduling:
     userPlaceholderPriority: 0
   userPlaceholder:
     enabled: true
-    replicas: 2
+    replicas: 3
 # ==========================================
 # The user scheduler’s only task is to schedule new user pods to the most utilized node.
   userScheduler:
@@ -100,6 +100,14 @@ singleuser:
     - display_name: "Data Science environment"
       description: "All libraries for Data Science courses and labs."
       default: true
+    - display_name: "Minimal Python environment"
+      description: "Pure Python with some libraries and Unix man packages."
+      kubespawner_override:
+        image: cr.yandex/crptfs8246iv37ojkorv/mibaminpy:20210917v0
+        cpu_guarantee: 1
+        cpu_limit: 2
+        mem_guarantee: 2G
+        mem_limit: 4G
     - display_name: "Spark environment"
       description: "Jupyter and PySpark image with S3 access."
       kubespawner_override:
@@ -108,14 +116,10 @@ singleuser:
         cpu_limit: 5
         mem_guarantee: 12G
         mem_limit: 16G
-    - display_name: "R environment"
-      description: "Popular packages from the R ecosystem."
-      kubespawner_override:
-        image: cr.yandex/crptfs8246iv37ojkorv/r-notebook:a0a544e6dc6e
     - display_name: "PostgreSQL environment"
       description: "Demo PostgreSQL database for the local experiments."
       kubespawner_override:
-        image: cr.yandex/crptfs8246iv37ojkorv/mibapostgres:20210929v0
+        image: cr.yandex/crptfs8246iv37ojkorv/mibapostgres:20230523v1
         lifecycle_hooks:
           postStart:
             exec:
@@ -131,7 +135,7 @@ singleuser:
     - display_name: "MongoDB environment"
       description: "Demo MongoDB database for the local experiments."
       kubespawner_override:
-        image: cr.yandex/crptfs8246iv37ojkorv/mibamongo:20220305v1
+        image: cr.yandex/crptfs8246iv37ojkorv/mibamongo:20230523v1
         lifecycle_hooks:
           postStart:
             exec:
@@ -147,7 +151,7 @@ singleuser:
     - display_name: "Airflow environment"
       description: "Airflow platform for the local experiments."
       kubespawner_override:
-        image: cr.yandex/crptfs8246iv37ojkorv/mibaairflow:20220316v0
+        image: cr.yandex/crptfs8246iv37ojkorv/mibaairflow:20230523v1
         cpu_guarantee: 3
         cpu_limit: 4
         mem_guarantee: 10G
@@ -169,7 +173,7 @@ singleuser:
     - display_name: "Hadoop (with YARN) and Spark environment"
       description: "Hadoop mini-cluster with Map-Reduce operations and standalone Spark."
       kubespawner_override:
-        image: cr.yandex/crptfs8246iv37ojkorv/dockerfilehdpsa:20230511v1
+        image: cr.yandex/crptfs8246iv37ojkorv/mibahdpsa:20230522v0
         cpu_guarantee: 3
         cpu_limit: 4
         mem_guarantee: 10G
@@ -187,14 +191,10 @@ singleuser:
                   mkdir -p /home/jovyan/__MANUAL;
                   rm -r /home/jovyan/__MANUAL/*;
                   mv -f /tmp/manual/* /home/jovyan/__MANUAL
-    - display_name: "Minimal Python environment"
-      description: "Pure Python with some libraries and Unix man packages."
+    - display_name: "R environment"
+      description: "Popular packages from the R ecosystem."
       kubespawner_override:
-        image: cr.yandex/crptfs8246iv37ojkorv/mibaminpy:20210917v0
-        cpu_guarantee: 1
-        cpu_limit: 2
-        mem_guarantee: 2G
-        mem_limit: 4G
+        image: cr.yandex/crptfs8246iv37ojkorv/r-notebook:20230522v1
 # ==========================================
 # Hadoop client image
 #    - display_name: "Hadoop environment"
