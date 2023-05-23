@@ -176,6 +176,7 @@ You also may want to monitor health or debug the claster with the list of comman
 | `kubectl -n jhub logs <pod_name>` | List logs from pod named `<pod_name>` in `jhub` namespace. Pod must be running to access to its logs |
 | `kubectl logs <pod_name> -n jhub -c <container_name> --previous` | List logs from pod named `<pod_name>` in `jhub` namespace if many docker containers are in a pod, where `<container_name>` stands for a container to find. Note the key `--previous` for the logs of a previous container launch |
 | `kubectl -n jhub exec -it <pod_name> /bin/bash` | Get access to shell `/bin/bash` of the running pod (container) `<pod_name>` in `jhub` namespace |
+| `kubectl get configmap cluster-autoscaler-status -n kube-system -o yaml` | Get the status of the autoscaler for the cluster |
 
 Full list of the possible `kubectl` commands can be found [in Kubernetes manual](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands).
 
@@ -247,17 +248,39 @@ image:
 
 ## Shared folder
 
-TBD
+Dhared folder for Jupyter users can be created with the help of [the manual](https://cloud.yandex.com/en-ru/docs/managed-kubernetes/operations/volumes/s3-csi-integration) for S3 integration.
 
+Here is an example of [YAML file](https://github.com/vgarshin/gsom_jhub_deploy/blob/master/s3jhubsharedpvc.yaml) for shared data folder that can used to create a shared PVC:
+```shell
+kubectl create -f s3jhubsharedpvc.yaml
+```
+You also need to edit [config file](https://github.com/vgarshin/gsom_jhub_deploy/blob/master/mibaconfig.yaml):
+```
+storage:
+  capacity: 12Gi
+  extraVolumes:
+    - name: jupyterhub-shared
+      persistentVolumeClaim:
+        claimName: jupyterhub-shared-pvc
+  extraVolumeMounts:
+    - name: jupyterhub-shared
+      mountPath: /home/jovyan/__SHARED
+```
+...and upgrade JupyterHub by running the script `./upgradejhub.sh`.
 
 ## Logging
 
-TBD
+Logging for the cluster is based on [the following manuals](https://cloud.yandex.com/en-ru/docs/logging/tutorials/k8s-fluent-bit-logging). The only difference is that logs are written to Object Storage for further analysis.
 
+In order to stream logs to mounted S3 bucket you will need to use `configs3.yaml` [file](https://github.com/vgarshin/gsom_jhub_deploy/blob/master/logging/configs3.yaml). Then you will have to restrt `fluentbit` with the command:
+```shell
+./fluentconf.sh
+```
+...the shell file is [here](https://github.com/vgarshin/gsom_jhub_deploy/blob/master/logging/fluentconf.sh). 
 
 ## Force drain
 
-TBD
+Force drain is neede to drain 'stuck' nodes and delete them from the cluster. It is implemented with [shell file](https://github.com/vgarshin/gsom_jhub_deploy/blob/master/hubdrain.sh) that can be scheduled as a cron job. 
 
 
 ## Troubleshooting
