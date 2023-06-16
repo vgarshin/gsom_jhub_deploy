@@ -308,7 +308,7 @@ hub:
                 'slug': 'spark-environment-adv',
                 'kubespawner_override':
                   {
-                    'image': 'cr.yandex/crptfs8246iv37ojkorv/mibapysparks3:20230510v0',
+                    'image': 'cr.yandex/crptfs8246iv37ojkorv/mibapysparks3:20230616v0',
                     'cpu_limit': cpu_limit,
                     'cpu_guarantee': cpu_guarantee,
                     'mem_limit': mem_limit,
