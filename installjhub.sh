@@ -13,7 +13,7 @@ helm upgrade --cleanup-on-fail \
   --install $RELEASE jupyterhub/jupyterhub \
   --namespace $NAMESPACE \
   --create-namespace \
-  --version=0.11.1 \
+  --version=2.0.0 \
   --values mibaconfig_tmp.yaml \
   --debug
 

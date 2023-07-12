@@ -12,7 +12,7 @@ done < mibacreds.txt
 helm upgrade --cleanup-on-fail \
   $RELEASE jupyterhub/jupyterhub \
   --namespace $NAMESPACE \
-  --version=0.11.1 \
+  --version=2.0.0 \
   --values mibaconfig_tmp.yaml \
   --debug
 

@@ -17,9 +17,9 @@ scheduling:
     globalDefault: true
     defaultPriority: 10
     userPlaceholderPriority: 0
-  userPlaceholder:
-    enabled: true
-    replicas: 3
+#  userPlaceholder:
+#    enabled: true
+#    replicas: 3
 # ==========================================
 # The user scheduler’s only task is to schedule new user pods to the most utilized node.
   userScheduler:
@@ -95,7 +95,7 @@ singleuser:
 # ==========================================
   image:
     name: cr.yandex/crptfs8246iv37ojkorv/mibadsai
-    tag: 20221115v1
+    tag: 20230505v3
   profileList:
     - display_name: "Data Science environment"
       description: "All libraries for Data Science courses and labs."
@@ -103,7 +103,7 @@ singleuser:
     - display_name: "Minimal Python environment"
       description: "Pure Python with some libraries and Unix man packages."
       kubespawner_override:
-        image: cr.yandex/crptfs8246iv37ojkorv/mibaminpy:20210917v0
+        image: cr.yandex/crptfs8246iv37ojkorv/mibaminpy:20230523v1
         cpu_guarantee: 1
         cpu_limit: 2
         mem_guarantee: 2G
@@ -111,7 +111,7 @@ singleuser:
     - display_name: "Spark environment"
       description: "Jupyter and PySpark image with S3 access."
       kubespawner_override:
-        image: cr.yandex/crptfs8246iv37ojkorv/mibapysparks3:20220204v0
+        image: cr.yandex/crptfs8246iv37ojkorv/mibapysparks3:20230616v0
         cpu_guarantee: 4
         cpu_limit: 5
         mem_guarantee: 12G
@@ -370,9 +370,13 @@ hub:
       }
       data_folder_users = <DATA_FOLDER_USERS>
       
-      from kubernetes import client
       from kubespawner.utils import get_k8s_model
-      from kubernetes.client.models import ( V1Volume, V1VolumeMount )
+      # older versions of Hub
+      #from kubernetes import client
+      #from kubernetes.client.models import ( V1Volume, V1VolumeMount )
+      # Hub versions since 2.x.x
+      from kubernetes_asyncio import client
+      from kubernetes_asyncio.client.models import ( V1Volume, V1VolumeMount )
       
       def modify_pod_hook(spawner, pod):
         try:
