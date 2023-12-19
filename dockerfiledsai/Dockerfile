@@ -7,7 +7,8 @@ ENV FF_VER 105.0
 ENV FF_DIR /dist
 
 RUN apt update -y && apt upgrade -y && \
-    apt install -y libgtk-3-common libasound2 libdbus-glib-1-2
+    apt install -y libgtk-3-common libasound2 libdbus-glib-1-2 && \
+    apt install sqlite3 -y
 
 RUN mkdir -p $FF_DIR && cd $FF_DIR && \
     wget -O - https://ftp.mozilla.org/pub/firefox/releases/$FF_VER/linux-x86_64/en-US/firefox-$FF_VER.tar.bz2 | tar -xjf -
@@ -32,6 +33,5 @@ RUN pip install --no-cache-dir nltk lightgbm xgboost catboost \
     pydot pydotplus graphviz plumbum wordcloud plotly pymystem3 \
     stats hyperopt torch torchvision tensorflow_addons pymorphy2 \
     boto3 s3fs psycopg2-binary langdetect tldextract selenium \
-    scrapy natasha gensim word2vec graphviz dash jupyterlab-dash \
-    python-Levenshtein nbgitpuller kds xlsxwriter eli5 \
-    scikit-learn==1.2.2
+    scrapy natasha gensim word2vec graphviz python-Levenshtein \
+    nbgitpuller kds xlsxwriter eli5 scikit-learn==1.2.2

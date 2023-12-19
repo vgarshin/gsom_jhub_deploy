@@ -17,9 +17,9 @@ scheduling:
     globalDefault: true
     defaultPriority: 10
     userPlaceholderPriority: 0
-#  userPlaceholder:
-#    enabled: true
-#    replicas: 3
+  userPlaceholder:
+    enabled: true
+    replicas: 3
 # ==========================================
 # The user scheduler’s only task is to schedule new user pods to the most utilized node.
   userScheduler:
@@ -95,7 +95,7 @@ singleuser:
 # ==========================================
   image:
     name: cr.yandex/crptfs8246iv37ojkorv/mibadsai
-    tag: 20230505v3
+    tag: 20230920v1
   profileList:
     - display_name: "Data Science environment"
       description: "All libraries for Data Science courses and labs."
@@ -211,6 +211,7 @@ singleuser:
     extraVolumeMounts:
       - name: jupyterhub-shared
         mountPath: /home/jovyan/__SHARED
+  allowPrivilegeEscalation: true
 
 cull:
   enabled: true
@@ -231,7 +232,33 @@ hub:
 #    miba_creds:
 #      mountPath: /etc/jupyterhub/mibacreds.json
 # ==========================================
+# clone custom JupyterHub templates into a volume
+  initContainers:
+    - name: git-clone-templates
+      image: alpine/git
+      args:
+        - clone
+        - --single-branch
+        - --branch=master
+        - --depth=1
+        - --
+        - https://github.com/vgarshin/gsom_jhub_ui.git
+        - /etc/jupyterhub/custom
+      securityContext:
+        runAsUser: 0
+      volumeMounts:
+        - name: custom-templates
+          mountPath: /etc/jupyterhub/custom
+  extraVolumes:
+    - name: custom-templates
+      emptyDir: {}
+  extraVolumeMounts:
+    - name: custom-templates
+      mountPath: /etc/jupyterhub/custom
+# ==========================================
   extraConfig:
+    templates: |
+      c.JupyterHub.template_paths = ['/etc/jupyterhub/custom/templates']
     mibaConfig: |
       # =============== START ====================
       # auth via GSOM Azure AD
@@ -264,6 +291,7 @@ hub:
       c.MibaAzureAdOAuthenticator.client_id = CREDS['client_id']
       c.MibaAzureAdOAuthenticator.client_secret = CREDS['client_secret']
       c.MibaAzureAdOAuthenticator.username_claim = 'unique_name'
+      c.MibaAzureAdOAuthenticator.allow_all = True
 
       # ==========================================
       # advanced instances for selected users (1)
@@ -284,7 +312,7 @@ hub:
                 'slug': 'datascience-environment-adv',
                 'kubespawner_override':
                   {
-                    'image': 'cr.yandex/crptfs8246iv37ojkorv/mibadsai:20230505v3',
+                    'image': 'cr.yandex/crptfs8246iv37ojkorv/mibadsai:20230920v1',
                     'cpu_limit': cpu_limit,
                     'cpu_guarantee': cpu_guarantee,
                     'mem_limit': mem_limit,
@@ -332,7 +360,7 @@ hub:
                 'slug': 'gpu-environment-adv',
                 'kubespawner_override':
                   {
-                    'image': 'cr.yandex/crptfs8246iv37ojkorv/mibadsai:20230505v3',
+                    'image': 'cr.yandex/crptfs8246iv37ojkorv/mibadsai:20230920v1',
                     'cpu_limit': cpu_limit,
                     'cpu_guarantee': cpu_guarantee,
                     'mem_limit': mem_limit,

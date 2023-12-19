@@ -14,11 +14,21 @@ USER root
 RUN apt-get update && apt-get install -y gnupg && \
     sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list' && \
     wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add - && \
-    apt-get -y install postgresql && apt install -y libpq-dev
+    apt-get -y install postgresql && apt install -y libpq-dev && \
+    apt-get install -y libswt-gtk-4-jni
 
 RUN chown -R postgres:postgres /var/run/postgresql
 RUN echo "jovyan ALL=(ALL)   ALL" >> /etc/sudoers
 RUN echo "jovyan:redspot" | chpasswd
+
+# Install DBeaver SQL client
+# to run it with docker use command 
+# `docker run --name test8 --network=host --volume="$HOME/.Xauthority:/home/jovyan/.Xauthority:rw" --env DISPLAY=$DISPLAY -it mibapostgres bash`
+#RUN wget https://dbeaver.io/files/dbeaver-ce-latest-linux.gtk.x86_64.tar.gz && \
+#    tar -zxvf dbeaver-ce-latest-linux.gtk.x86_64.tar.gz && \
+#    mv dbeaver /usr/local/src/ && \
+#    ln -s /usr/local/src/dbeaver/dbeaver /usr/bin/dbeaver && \
+#    rm dbeaver-ce-latest-linux.gtk.x86_64.tar.gz
 
 USER postgres
 
