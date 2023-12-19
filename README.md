@@ -248,7 +248,7 @@ image:
 
 ## Shared folder
 
-Dhared folder for Jupyter users can be created with the help of [the manual](https://cloud.yandex.com/en-ru/docs/managed-kubernetes/operations/volumes/s3-csi-integration) for S3 integration.
+Shared folder for Jupyter users can be created with the help of [the manual](https://cloud.yandex.com/en-ru/docs/managed-kubernetes/operations/volumes/s3-csi-integration) for S3 integration.
 
 Here is an example of [YAML file](https://github.com/vgarshin/gsom_jhub_deploy/blob/master/s3jhubsharedpvc.yaml) for shared data folder that can used to create a shared PVC:
 ```shell
@@ -267,6 +267,26 @@ storage:
       mountPath: /home/jovyan/__SHARED
 ```
 ...and upgrade JupyterHub by running the script `./upgradejhub.sh`.
+
+
+## Folder for selected users
+
+Shared folder for selected users is created like shared folder (see above), but you should specify users for that folder to be mounted to their environment. Users and their folders are specified in the `mibacreds.txt` file in the section `DATA_PROJECTS_USERS <list_of_projects>`.
+
+
+## Delete shared folder
+
+Commands to list all PVC and delete selected one:
+```shell
+kubectl get pvc -n jhub
+kubectl delete pvc <pvc_name> -n jhub
+```
+
+If PV stuck e.g. in `Released` mode use: 
+```shell
+kubectl get pv -n jhub
+kubectl patch pv <pvc_name> -p '{"spec":{"claimRef": null}}'
+```
 
 ## Logging
 
