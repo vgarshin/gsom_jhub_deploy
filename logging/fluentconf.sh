@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 cp configs3.yaml configs3_tmp.yaml
 
 # file awscredentials.txt should contain

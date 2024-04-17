@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: jupyterhub-prj-sites-data-pvc
+  name: jupyterhub-prj-002-data-pvc
   namespace: jhub
 spec:
   accessModes:

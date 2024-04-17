@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # use in crontab
 # 0 21 * * * /home/simbauser/jhub/hubdrain.sh >> /home/simbauser/jhub/hubdrain.log 2> /home/simbauser/jhub/hubdrainerr.log

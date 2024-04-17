@@ -36,6 +36,12 @@ scheduling:
 #          - prefer (the default)
 #          - require
 #        matchNodePurpose: require
+# ==========================================
+# With the hook-image-puller enabled (the default), the user images being introduced 
+# will be pulled to the nodes before the hub pod is updated to utilize the new image.
+prePuller:
+  hook:
+    enabled: true
 
 # ==========================================
 # Secret for container registry
@@ -60,7 +66,10 @@ singleuser:
             git clone https://github.com/vgarshin/gsom_jhub_manual /tmp/manual;
             mkdir -p /home/jovyan/__MANUAL;
             rm -r /home/jovyan/__MANUAL/*;
-            mv -f /tmp/manual/* /home/jovyan/__MANUAL
+            mv -f /tmp/manual/* /home/jovyan/__MANUAL;
+            mkdir -p /home/jovyan/.local/share/jupyter/metadata;
+            mkdir -p /home/jovyan/.local/share/jupyter/metadata/code-snippets;
+            mv /home/jovyan/__MANUAL/code-snippets/* /home/jovyan/.local/share/jupyter/metadata/code-snippets/
 # ==========================================
 # local DBs creds
   extraEnv:
@@ -73,7 +82,7 @@ singleuser:
 #  defaultUrl: "/lab"
 # ==========================================
 # timeout to user's server start
-  startTimeout: 600
+  startTimeout: 900
 # ==========================================
 # 5 users per node config
   cpu:
@@ -94,8 +103,8 @@ singleuser:
 #    guarantee: 18G
 # ==========================================
   image:
-    name: cr.yandex/crptfs8246iv37ojkorv/mibadsai
-    tag: 20230920v1
+    name: <DOCKER_IMAGE_DSAI_NAME>
+    tag: <DOCKER_IMAGE_DSAI_TAG>
   profileList:
     - display_name: "Data Science environment"
       description: "All libraries for Data Science courses and labs."
@@ -103,7 +112,7 @@ singleuser:
     - display_name: "Minimal Python environment"
       description: "Pure Python with some libraries and Unix man packages."
       kubespawner_override:
-        image: cr.yandex/crptfs8246iv37ojkorv/mibaminpy:20230523v1
+        image: <DOCKER_IMAGE_MINPY_NAME>:<DOCKER_IMAGE_MINPY_TAG>
         cpu_guarantee: 1
         cpu_limit: 2
         mem_guarantee: 2G
@@ -111,7 +120,7 @@ singleuser:
     - display_name: "Spark environment"
       description: "Jupyter and PySpark image with S3 access."
       kubespawner_override:
-        image: cr.yandex/crptfs8246iv37ojkorv/mibapysparks3:20230616v0
+        image: <DOCKER_IMAGE_SPARK_NAME>:<DOCKER_IMAGE_SPARK_TAG>
         cpu_guarantee: 4
         cpu_limit: 5
         mem_guarantee: 12G
@@ -119,7 +128,7 @@ singleuser:
     - display_name: "PostgreSQL environment"
       description: "Demo PostgreSQL database for the local experiments."
       kubespawner_override:
-        image: cr.yandex/crptfs8246iv37ojkorv/mibapostgres:20230523v1
+        image: <DOCKER_IMAGE_PG_NAME>:<DOCKER_IMAGE_PG_TAG>
         lifecycle_hooks:
           postStart:
             exec:
@@ -135,7 +144,7 @@ singleuser:
     - display_name: "MongoDB environment"
       description: "Demo MongoDB database for the local experiments."
       kubespawner_override:
-        image: cr.yandex/crptfs8246iv37ojkorv/mibamongo:20230523v1
+        image: <DOCKER_IMAGE_MONGO_NAME>:<DOCKER_IMAGE_MONGO_TAG>
         lifecycle_hooks:
           postStart:
             exec:
@@ -151,7 +160,7 @@ singleuser:
     - display_name: "Airflow environment"
       description: "Airflow platform for the local experiments."
       kubespawner_override:
-        image: cr.yandex/crptfs8246iv37ojkorv/mibaairflow:20230523v1
+        image: <DOCKER_IMAGE_AIR_NAME>:<DOCKER_IMAGE_AIR_TAG>
         cpu_guarantee: 3
         cpu_limit: 4
         mem_guarantee: 10G
@@ -173,7 +182,7 @@ singleuser:
     - display_name: "Hadoop (with YARN) and Spark environment"
       description: "Hadoop mini-cluster with Map-Reduce operations and standalone Spark."
       kubespawner_override:
-        image: cr.yandex/crptfs8246iv37ojkorv/mibahdpsa:20230522v0
+        image: <DOCKER_IMAGE_HDP_NAME>:<DOCKER_IMAGE_HDP_TAG>
         cpu_guarantee: 3
         cpu_limit: 4
         mem_guarantee: 10G
@@ -194,7 +203,7 @@ singleuser:
     - display_name: "R environment"
       description: "Popular packages from the R ecosystem."
       kubespawner_override:
-        image: cr.yandex/crptfs8246iv37ojkorv/r-notebook:20230522v1
+        image: <DOCKER_IMAGE_R_NAME>:<DOCKER_IMAGE_R_TAG>
 # ==========================================
 # Hadoop client image
 #    - display_name: "Hadoop environment"
@@ -301,10 +310,10 @@ hub:
           
           # Data Science advanced hardware 
           if (username in <ADVANCED_HW_USERS_DS>):
-            cpu_limit = 7
-            mem_limit = '25G'
-            cpu_guarantee = 5
-            mem_guarantee = '16G'
+            cpu_limit = 8
+            mem_limit = '32G'
+            cpu_guarantee = 6
+            mem_guarantee = '24G'
             spawner.profile_list.extend([
               {
                 'display_name': 'DataScience environment (advanced)',
@@ -312,7 +321,7 @@ hub:
                 'slug': 'datascience-environment-adv',
                 'kubespawner_override':
                   {
-                    'image': 'cr.yandex/crptfs8246iv37ojkorv/mibadsai:20230920v1',
+                    'image': '<DOCKER_IMAGE_DSAI_ADV_NAME>:<DOCKER_IMAGE_DSAI_ADV_TAG>',
                     'cpu_limit': cpu_limit,
                     'cpu_guarantee': cpu_guarantee,
                     'mem_limit': mem_limit,
@@ -326,9 +335,9 @@ hub:
           # Spark advanced hardware
           if (username in <ADVANCED_HW_USERS_SPARK>):
             cpu_limit = 10
-            mem_limit = '32G'
-            cpu_guarantee = 7
-            mem_guarantee = '25G'
+            mem_limit = '40G'
+            cpu_guarantee = 8
+            mem_guarantee = '32G'
             spawner.profile_list.extend([
               {
                 'display_name': 'Spark environment (advanced)',
@@ -336,7 +345,7 @@ hub:
                 'slug': 'spark-environment-adv',
                 'kubespawner_override':
                   {
-                    'image': 'cr.yandex/crptfs8246iv37ojkorv/mibapysparks3:20230616v0',
+                    'image': '<DOCKER_IMAGE_SPARK_NAME>:<DOCKER_IMAGE_SPARK_TAG>',
                     'cpu_limit': cpu_limit,
                     'cpu_guarantee': cpu_guarantee,
                     'mem_limit': mem_limit,
@@ -349,10 +358,10 @@ hub:
 
           # GPU advanced hardware
           if (username in <ADVANCED_HW_USERS_GPU>):
-            cpu_limit = 4
-            mem_limit = '8G'
-            cpu_guarantee = 2
-            mem_guarantee = '4G'
+            cpu_limit = 8
+            mem_limit = '40G'
+            cpu_guarantee = 4
+            mem_guarantee = '20G'
             spawner.profile_list.extend([
               {
                 'display_name': 'GPU environment (advanced)',
@@ -360,7 +369,7 @@ hub:
                 'slug': 'gpu-environment-adv',
                 'kubespawner_override':
                   {
-                    'image': 'cr.yandex/crptfs8246iv37ojkorv/mibadsai:20230920v1',
+                    'image': '<DOCKER_IMAGE_DSAI_ADV_NAME>:<DOCKER_IMAGE_DSAI_ADV_TAG>',
                     'cpu_limit': cpu_limit,
                     'cpu_guarantee': cpu_guarantee,
                     'mem_limit': mem_limit,

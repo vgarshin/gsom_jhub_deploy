@@ -26,12 +26,28 @@ USER $NB_UID
 
 RUN pip install --upgrade pip
 
+# ML
+RUN pip install --no-cache-dir nltk lightgbm xgboost catboost \
+    pydot pydotplus graphviz plumbum wordcloud plotly pymystem3 \
+    stats hyperopt pymorphy2 langdetect natasha gensim word2vec \
+    graphviz python-Levenshtein scikit-learn==1.2.2
+
+# utilities
+RUN pip install --no-cache-dir boto3 s3fs psycopg2-binary tldextract \
+    selenium scrapy nbgitpuller kds xlsxwriter eli5
+
+# DL
+RUN pip install --no-cache-dir torch torchvision tensorflow_addons
+
+# LLM chat-bot interface
+# NOTE: requires jupyterlab>=4.0.0
+#       incompatible with `elyra` extentions below
+#RUN pip install --no-cache-dir jupyter-ai gpt4all
+
+# Jupyter extensions
 RUN pip install jupyter-server-proxy && \
     jupyter serverextension enable --sys-prefix jupyter_server_proxy
 
-RUN pip install --no-cache-dir nltk lightgbm xgboost catboost \
-    pydot pydotplus graphviz plumbum wordcloud plotly pymystem3 \
-    stats hyperopt torch torchvision tensorflow_addons pymorphy2 \
-    boto3 s3fs psycopg2-binary langdetect tldextract selenium \
-    scrapy natasha gensim word2vec graphviz python-Levenshtein \
-    nbgitpuller kds xlsxwriter eli5 scikit-learn==1.2.2
+RUN pip install --upgrade elyra-code-snippet-extension && \
+    pip install --upgrade elyra-python-editor-extension && \
+    jupyter serverextension enable elyra

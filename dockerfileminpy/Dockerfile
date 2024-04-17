@@ -15,5 +15,10 @@ RUN apt-get update && \
 
 USER 1000
 
+# Jupyter extensions
 RUN pip install jupyter-server-proxy && \
     jupyter serverextension enable --sys-prefix jupyter_server_proxy
+
+RUN pip install --upgrade elyra-code-snippet-extension && \
+    pip install --upgrade elyra-python-editor-extension && \
+    jupyter serverextension enable elyra
