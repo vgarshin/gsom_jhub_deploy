@@ -1,5 +1,21 @@
 proxy:
   secretToken: "<SECRET_TOKEN>"
+  # chp relates to the proxy pod, which is responsible for routing traffic based
+  # on dynamic configuration sent from JupyterHub to CHP's REST API.
+  chp:
+    image:
+      name: <CR_NAME>/<CR_ID>/jupyterhub/configurable-http-proxy
+      tag: "4.6.1"
+  # traefik relates to the autohttps pod, which is responsible for TLS
+  # termination when proxy.https.type=letsencrypt.
+  traefik:
+    image:
+      name: <CR_NAME>/<CR_ID>/jupyterhub/traefik
+      tag: "v2.10.5"
+  secretSync:
+    image:
+      name: <CR_NAME>/<CR_ID>/jupyterhub/k8s-secret-sync
+      tag: "3.2.0"
   https:
     enabled: true
     hosts:
@@ -42,18 +58,28 @@ scheduling:
 prePuller:
   hook:
     enabled: true
+    image:
+      name: <CR_NAME>/<CR_ID>/jupyterhub/k8s-image-awaiter
+      tag: "3.2.0"
 
 # ==========================================
 # Secret for container registry
 # password lifetime 1 year !!!
 imagePullSecret:
   create: true
-  registry: cr.yandex
+  registry: <CR_NAME>
   username: oauth
   email: vgarshin@yandex.ru
   password: <CONTAINER_REGISTRY_PASSWORD>
 
 singleuser:
+  networkTools:
+    image:
+      name: <CR_NAME>/<CR_ID>/jupyterhub/k8s-network-tools
+      tag: "3.2.0"
+  image:
+    name: <CR_NAME>/<CR_ID>/jupyterhub/k8s-singleuser-sample
+    tag: "3.2.0"
 # ==========================================
 # git clone repository at start for user
   lifecycleHooks:
@@ -103,7 +129,7 @@ singleuser:
 #    guarantee: 18G
 # ==========================================
   image:
-    name: <DOCKER_IMAGE_DSAI_NAME>
+    name: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_DSAI_NAME>
     tag: <DOCKER_IMAGE_DSAI_TAG>
   profileList:
     - display_name: "Data Science environment"
@@ -112,7 +138,7 @@ singleuser:
     - display_name: "Minimal Python environment"
       description: "Pure Python with some libraries and Unix man packages."
       kubespawner_override:
-        image: <DOCKER_IMAGE_MINPY_NAME>:<DOCKER_IMAGE_MINPY_TAG>
+        image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_MINPY_NAME>:<DOCKER_IMAGE_MINPY_TAG>
         cpu_guarantee: 1
         cpu_limit: 2
         mem_guarantee: 2G
@@ -120,7 +146,7 @@ singleuser:
     - display_name: "Spark environment"
       description: "Jupyter and PySpark image with S3 access."
       kubespawner_override:
-        image: <DOCKER_IMAGE_SPARK_NAME>:<DOCKER_IMAGE_SPARK_TAG>
+        image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_SPARK_NAME>:<DOCKER_IMAGE_SPARK_TAG>
         cpu_guarantee: 4
         cpu_limit: 5
         mem_guarantee: 12G
@@ -128,7 +154,7 @@ singleuser:
     - display_name: "PostgreSQL environment"
       description: "Demo PostgreSQL database for the local experiments."
       kubespawner_override:
-        image: <DOCKER_IMAGE_PG_NAME>:<DOCKER_IMAGE_PG_TAG>
+        image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_PG_NAME>:<DOCKER_IMAGE_PG_TAG>
         lifecycle_hooks:
           postStart:
             exec:
@@ -144,7 +170,7 @@ singleuser:
     - display_name: "MongoDB environment"
       description: "Demo MongoDB database for the local experiments."
       kubespawner_override:
-        image: <DOCKER_IMAGE_MONGO_NAME>:<DOCKER_IMAGE_MONGO_TAG>
+        image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_MONGO_NAME>:<DOCKER_IMAGE_MONGO_TAG>
         lifecycle_hooks:
           postStart:
             exec:
@@ -160,7 +186,7 @@ singleuser:
     - display_name: "Airflow environment"
       description: "Airflow platform for the local experiments."
       kubespawner_override:
-        image: <DOCKER_IMAGE_AIR_NAME>:<DOCKER_IMAGE_AIR_TAG>
+        image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_AIR_NAME>:<DOCKER_IMAGE_AIR_TAG>
         cpu_guarantee: 3
         cpu_limit: 4
         mem_guarantee: 10G
@@ -182,7 +208,7 @@ singleuser:
     - display_name: "Hadoop (with YARN) and Spark environment"
       description: "Hadoop mini-cluster with Map-Reduce operations and standalone Spark."
       kubespawner_override:
-        image: <DOCKER_IMAGE_HDP_NAME>:<DOCKER_IMAGE_HDP_TAG>
+        image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_HDP_NAME>:<DOCKER_IMAGE_HDP_TAG>
         cpu_guarantee: 3
         cpu_limit: 4
         mem_guarantee: 10G
@@ -203,7 +229,7 @@ singleuser:
     - display_name: "R environment"
       description: "Popular packages from the R ecosystem."
       kubespawner_override:
-        image: <DOCKER_IMAGE_R_NAME>:<DOCKER_IMAGE_R_TAG>
+        image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_R_NAME>:<DOCKER_IMAGE_R_TAG>
 # ==========================================
 # Hadoop client image
 #    - display_name: "Hadoop environment"
@@ -228,6 +254,9 @@ cull:
   every: 600
 
 hub:
+  image:
+    name: <CR_NAME>/<CR_ID>/jupyterhub/k8s-hub
+    tag: "3.2.0"
   config:
     Authenticator:
       admin_users:
@@ -244,7 +273,7 @@ hub:
 # clone custom JupyterHub templates into a volume
   initContainers:
     - name: git-clone-templates
-      image: alpine/git
+      image: <CR_NAME>/<CR_ID>/jupyterhub/alpine/git:latest
       args:
         - clone
         - --single-branch
@@ -308,6 +337,30 @@ hub:
         username = spawner.user.name
         try: 
           
+          # Data Science AI bot 
+          if (username in <ADVANCED_HW_USERS_DS_LLM>):
+            cpu_limit = 5
+            mem_limit = '16G'
+            cpu_guarantee = 4
+            mem_guarantee = '12G'
+            spawner.profile_list.extend([
+              {
+                'display_name': 'Data Science environment with LLM',
+                'description': f'All libraries for Data Science courses with AI assistant: {cpu_limit} CPU / {mem_limit} RAM.',
+                'slug': 'datascience-environment-adv',
+                'kubespawner_override':
+                  {
+                    'image': '<CR_NAME>/<CR_ID>/<DOCKER_IMAGE_LLM_NAME>:<DOCKER_IMAGE_LLM_TAG>',
+                    'cpu_limit': cpu_limit,
+                    'cpu_guarantee': cpu_guarantee,
+                    'mem_limit': mem_limit,
+                    'mem_guarantee': mem_guarantee
+                  }
+              }
+            ])
+            spawner.profile_list = list({x['display_name']:x for x in spawner.profile_list}.values())
+            spawner.log.info(f'Spawning sever for {username} with advanced configuration option')
+
           # Data Science advanced hardware 
           if (username in <ADVANCED_HW_USERS_DS>):
             cpu_limit = 8
@@ -321,7 +374,7 @@ hub:
                 'slug': 'datascience-environment-adv',
                 'kubespawner_override':
                   {
-                    'image': '<DOCKER_IMAGE_DSAI_ADV_NAME>:<DOCKER_IMAGE_DSAI_ADV_TAG>',
+                    'image': '<CR_NAME>/<CR_ID>/<DOCKER_IMAGE_DSAI_ADV_NAME>:<DOCKER_IMAGE_DSAI_ADV_TAG>',
                     'cpu_limit': cpu_limit,
                     'cpu_guarantee': cpu_guarantee,
                     'mem_limit': mem_limit,
@@ -334,10 +387,10 @@ hub:
           
           # Spark advanced hardware
           if (username in <ADVANCED_HW_USERS_SPARK>):
-            cpu_limit = 10
-            mem_limit = '40G'
-            cpu_guarantee = 8
-            mem_guarantee = '32G'
+            cpu_limit = 14
+            mem_limit = '60G'
+            cpu_guarantee = 12
+            mem_guarantee = '52G'
             spawner.profile_list.extend([
               {
                 'display_name': 'Spark environment (advanced)',
@@ -345,7 +398,7 @@ hub:
                 'slug': 'spark-environment-adv',
                 'kubespawner_override':
                   {
-                    'image': '<DOCKER_IMAGE_SPARK_NAME>:<DOCKER_IMAGE_SPARK_TAG>',
+                    'image': '<CR_NAME>/<CR_ID>/<DOCKER_IMAGE_SPARK_NAME>:<DOCKER_IMAGE_SPARK_TAG>',
                     'cpu_limit': cpu_limit,
                     'cpu_guarantee': cpu_guarantee,
                     'mem_limit': mem_limit,
@@ -369,7 +422,7 @@ hub:
                 'slug': 'gpu-environment-adv',
                 'kubespawner_override':
                   {
-                    'image': '<DOCKER_IMAGE_DSAI_ADV_NAME>:<DOCKER_IMAGE_DSAI_ADV_TAG>',
+                    'image': '<CR_NAME>/<CR_ID>/<DOCKER_IMAGE_DSAI_ADV_NAME>:<DOCKER_IMAGE_DSAI_ADV_TAG>',
                     'cpu_limit': cpu_limit,
                     'cpu_guarantee': cpu_guarantee,
                     'mem_limit': mem_limit,
