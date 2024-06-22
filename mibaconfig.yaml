@@ -123,10 +123,10 @@ singleuser:
 # 3 users per node config
 #  cpu:
 #    limit: 5
-#    guarantee: 5
+#    guarantee: 4
 #  memory:
 #    limit: 18G
-#    guarantee: 18G
+#    guarantee: 16G
 # ==========================================
   image:
     name: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_DSAI_NAME>
@@ -347,7 +347,7 @@ hub:
               {
                 'display_name': 'Data Science environment with LLM',
                 'description': f'All libraries for Data Science courses with AI assistant: {cpu_limit} CPU / {mem_limit} RAM.',
-                'slug': 'datascience-environment-adv',
+                'slug': 'datascience-environment-adv-llm',
                 'kubespawner_override':
                   {
                     'image': '<CR_NAME>/<CR_ID>/<DOCKER_IMAGE_LLM_NAME>:<DOCKER_IMAGE_LLM_TAG>',
@@ -387,10 +387,10 @@ hub:
           
           # Spark advanced hardware
           if (username in <ADVANCED_HW_USERS_SPARK>):
-            cpu_limit = 14
-            mem_limit = '60G'
-            cpu_guarantee = 12
-            mem_guarantee = '52G'
+            cpu_limit = 10
+            mem_limit = '40G'
+            cpu_guarantee = 8
+            mem_guarantee = '32G'
             spawner.profile_list.extend([
               {
                 'display_name': 'Spark environment (advanced)',
