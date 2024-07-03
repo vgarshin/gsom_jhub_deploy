@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # use in crontab
-# 0 21 * * * /home/simbauser/jhub/hubdrain.sh >> /home/simbauser/jhub/hubdrain.log 2> /home/simbauser/jhub/hubdrainerr.log
+# 0 21 * * * /home/simbauser/jhub/utils/hubdrain.sh >> /home/simbauser/jhub/utils/hubdrain.log 2> /home/simbauser/jhub/utils/hubdrainerr.log
 # to drain at 00:00 Moscow time
 # or 0 */12 * * *  - to run every 12 hours
 

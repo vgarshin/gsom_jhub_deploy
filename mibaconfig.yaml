@@ -33,9 +33,10 @@ scheduling:
     globalDefault: true
     defaultPriority: 10
     userPlaceholderPriority: 0
-  userPlaceholder:
-    enabled: true
-    replicas: 3
+# uncomment following lines to add dummy users
+#  userPlaceholder:
+#    enabled: true
+#    replicas: 3
 # ==========================================
 # The user scheduler’s only task is to schedule new user pods to the most utilized node.
   userScheduler:
