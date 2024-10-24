@@ -8,7 +8,9 @@ ENV FF_DIR /dist
 
 RUN apt update -y && apt upgrade -y && \
     apt install -y libgtk-3-common libasound2 libdbus-glib-1-2 && \
-    apt install sqlite3 -y
+    apt install sqlite3 -y && \
+    apt install -y tesseract-ocr tesseract-ocr-rus && \
+    apt install -y poppler-utils
 
 RUN mkdir -p $FF_DIR && cd $FF_DIR && \
     wget -O - https://ftp.mozilla.org/pub/firefox/releases/$FF_VER/linux-x86_64/en-US/firefox-$FF_VER.tar.bz2 | tar -xjf -
@@ -43,6 +45,9 @@ RUN pip install --no-cache-dir torch torchvision tensorflow_addons
 # NOTE: requires jupyterlab>=4.0.0
 #       incompatible with `elyra` extentions below
 #RUN pip install --no-cache-dir jupyter-ai gpt4all
+
+# OCR tools
+RUN pip install --no-cache-dir pytesseract pdf2image
 
 # Jupyter extensions
 RUN pip install jupyter-server-proxy && \

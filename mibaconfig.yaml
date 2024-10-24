@@ -1,13 +1,13 @@
 proxy:
   secretToken: "<SECRET_TOKEN>"
   # chp relates to the proxy pod, which is responsible for routing traffic based
-  # on dynamic configuration sent from JupyterHub to CHP's REST API.
+  # on dynamic configuration sent from JupyterHub to CHP's REST API
   chp:
     image:
       name: <CR_NAME>/<CR_ID>/jupyterhub/configurable-http-proxy
       tag: "4.6.1"
   # traefik relates to the autohttps pod, which is responsible for TLS
-  # termination when proxy.https.type=letsencrypt.
+  # termination when proxy.https.type=letsencrypt
   traefik:
     image:
       name: <CR_NAME>/<CR_ID>/jupyterhub/traefik
@@ -27,24 +27,24 @@ scheduling:
 # ==========================================
 # This priority mechanism allows us to add dummy users or user-placeholders 
 # with low priority that can take up resources until a real user with 
-# (higher priority) requires it. 
+# (higher priority) requires it
   podPriority:
     enabled: true
     globalDefault: true
     defaultPriority: 10
     userPlaceholderPriority: 0
 # uncomment following lines to add dummy users
-#  userPlaceholder:
-#    enabled: true
-#    replicas: 3
+  userPlaceholder:
+    enabled: true
+    replicas: 3
 # ==========================================
-# The user scheduler’s only task is to schedule new user pods to the most utilized node.
+# The user scheduler’s only task is to schedule new user pods to the most utilized node
   userScheduler:
     enabled: true
 # ==========================================
 # If we add a taint to all the nodes in the node pool, and a toleration on the user pods 
 # to tolerate being scheduled on a tainted node, we have practically dedicated the node pool 
-# to be used only by user pods. 
+# to be used only by user pods
 #  scheduling:
 #    userPods:
 #      nodeAffinity:
@@ -64,8 +64,8 @@ prePuller:
       tag: "3.2.0"
 
 # ==========================================
-# Secret for container registry
-# password lifetime 1 year !!!
+# Secret for container registry password
+# NOTE - password's lifetime is 1 year !!!
 imagePullSecret:
   create: true
   registry: <CR_NAME>
@@ -98,17 +98,14 @@ singleuser:
             mkdir -p /home/jovyan/.local/share/jupyter/metadata/code-snippets;
             mv /home/jovyan/__MANUAL/code-snippets/* /home/jovyan/.local/share/jupyter/metadata/code-snippets/
 # ==========================================
-# local DBs creds
+# databases credentials
   extraEnv:
     CLICKHOUSE_USER: "<CLICKHOUSE_LOGIN>"
     CLICKHOUSE_PASSWORD: "<CLICKHOUSE_PASSWORD>"
     POSTGRESQL_USER: "<POSTGRESQL_LOGIN>"
     POSTGRESQL_PASSWORD: "<POSTGRESQL_PASSWORD>"
 # ==========================================
-# JupyterLab turn on-off 
-#  defaultUrl: "/lab"
-# ==========================================
-# timeout to user's server start
+# timeout for user's server start
   startTimeout: 900
 # ==========================================
 # 5 users per node config
@@ -298,42 +295,162 @@ hub:
   extraConfig:
     templates: |
       c.JupyterHub.template_paths = ['/etc/jupyterhub/custom/templates']
-    mibaConfig: |
-      # =============== START ====================
-      # auth via GSOM Azure AD
+    simbaConfig: |
+      # =============================================
+      # ========== START OF CUSTOM CONFIG ===========
+      # =============================================
+
+
+      # =========== (I) Authentication ==============
+
+
       import re
       import json
+      from traitlets import List
+      from jupyterhub.auth import Authenticator
+      from oauthenticator.github import GitHubOAuthenticator
       from oauthenticator.azuread import AzureAdOAuthenticator
+      from oauthenticator.oauth2 import OAuthenticator
 
-      class MibaAzureAdOAuthenticator(AzureAdOAuthenticator):
+
+      class SimbaAzureAdOAuthenticator(AzureAdOAuthenticator):
         def normalize_username(self, username):
           username = username.split('@')[0]
           username = username.lower()
           username = re.sub('[^0-9a-zA-Z]+', '', username)
           username = self.username_map.get(username, username)
           return username
+
+
+      class SimbaYaOAuthenticator(OAuthenticator):
+        def user_info_to_username(self, user_info):
+          if callable(self.username_claim):
+              username = self.username_claim(user_info)
+          else:
+              username = user_info.get(self.username_claim, None)
+          if not username:
+              message = (
+                  f'No {self.username_claim} found in {user_info}. Maybe the hub needs to be configured to request more scopes?',
+              )
+              self.log.error(message)
+              raise ValueError(message)
+          db_dict = <DB_USERS_02>
+          if db_dict:
+            return db_dict['<CLIENT_02_PREFIX>' + username]
+          else:
+            return '<CLIENT_02_PREFIX>' + username
+
+
+      # based on https://github.com/jupyterhub/oauthenticator/issues/136
+      class MultiOAuthenticator(Authenticator):
+        authenticators = List(help='Authenticators to use', config=True)
+
+        def __init__(self, *arg, **kwargs):
+          super().__init__(*arg, **kwargs)
+          self._authenticators = []
+          for auth_class, url_scope, configs in self.authenticators:
+            instance = auth_class(**configs)
+            login_url = instance.login_url('')
+            instance._url_scope = url_scope
+            instance._login_url = login_url
+            
+            def custom_login_url(self, base_url):
+              return url_path_join(base_url, self._url_scope, self._login_url)
+            
+            instance.login_url = custom_login_url.__get__(instance, auth_class)
+            self._authenticators.append({
+              'instance': instance,
+              'url_scope': url_scope,
+            })
+        
+        def get_handlers(self, app):
+          routes = []
+          for _auth in self._authenticators:
+            for path, handler in _auth['instance'].get_handlers(app):
+
+              class SubHandler(handler):
+                  authenticator = _auth['instance']
+
+              routes.append((f'{_auth["url_scope"]}{path}', SubHandler))
+          print('routes', routes)
+          return routes
+        
+        def get_custom_html(self, base_url):
+          html = [
+            '<div class="service-login">',
+            '<h1 class="text-center">Welcome to SimBA</h1>',
+            """
+            <p style="text-align:center">
+              SimBA or Simulation platform for Business Analytics and Big Data is a flexible and powerful tool<br>
+              for the students, teachers and researches of Graduate School of Management SPbU (GSOM SPbU).<br>
+              The platform is based on JupyterHub and it is free for all users with GSOM account<br>
+              <br>
+              Join our <a href="https://t.me/simbaplatform" target="_blank">SimBA channel</a> to keep up to date with SimBA's events<br>
+              and may the Force of Data Analytics be with You!
+            </p>
+            """,
+            """
+            <p id='insecure-login-warning' class='hidden'>
+            Warning: JupyterHub seems to be served over an unsecured HTTP connection.
+            We strongly recommend enabling HTTPS for JupyterHub.
+            </p>
+            """
+          ]
+          for authenticator in self._authenticators:
+            login_service = authenticator['instance'].login_service or "Local User"
+            url = authenticator['instance'].login_url(base_url)
+            html.append(
+              f"""
+              <div style="margin-bottom:10px;">
+                <a style="width:30%;" role="button" class='btn btn-jupyter btn-lg' href='{url}'>
+                Sign in with {login_service}
+                </a>
+              </div>
+              """
+            )
+          footer_html = [
+            """
+            <div class="contentRight">
+              <a href="https://t.me/simbaplatform">
+                <img src="https://storage.yandexcloud.net/gsom-design-elements/simba-logo-nano.png" alt="SimBA logo">
+              </a>
+            </div>
+            """,
+            '</div>',
+          ]
+          return '\n'.join(html + footer_html)
+
       
-      # for future release of JupyterHub for Kubernetes
-      #with open('/etc/jupyterhub/mibacreds.json') as file:
-      #  CREDS = json.load(file)
+      c.MultiOAuthenticator.authenticators = [
+        (SimbaAzureAdOAuthenticator, '/azuread', {
+          'tenant_id': '<TENANT_01_ID>',
+          'client_id': '<CLIENT_01_ID>',
+          'client_secret': '<CLIENT_01_SECRET>',
+          'oauth_callback_url': 'https://<HOST_NAME>/hub/azuread/oauth_callback',
+          'username_claim': 'unique_name',
+          'allow_all': True,
+          #'allowed_users': <ALLOWED_USERS_01>
+        }),
+        (SimbaYaOAuthenticator, '/yandexid', {
+          'client_id': '<CLIENT_02_ID>',
+          'client_secret': '<CLIENT_02_SECRET>',
+          'oauth_callback_url': 'https://<HOST_NAME>/hub/yandexid/oauth_callback',
+          'login_service': 'Yandex.Passport',
+          'username_claim':'login',
+          'authorize_url': 'https://oauth.yandex.ru/authorize',
+          'token_url': 'https://oauth.yandex.ru/token',
+          'userdata_url': 'https://login.yandex.ru/info',
+          #'allow_all': True,
+          'allowed_users': <ALLOWED_USERS_02>
+        })
+      ]
+      c.JupyterHub.authenticator_class = MultiOAuthenticator
+
+
+      # ===== (2) Advanced users configuration ======
       
-      CREDS = {
-        'tenant_id': '<TENANT_ID>',
-        'client_id': '<CLIENT_ID>',
-        'client_secret': '<CLIENT_SECRET>'
-      }
 
-      c.JupyterHub.authenticator_class = MibaAzureAdOAuthenticator
-
-      c.MibaAzureAdOAuthenticator.tenant_id = CREDS['tenant_id']
-      c.MibaAzureAdOAuthenticator.oauth_callback_url = 'https://<HOST_NAME>/hub/oauth_callback'
-      c.MibaAzureAdOAuthenticator.client_id = CREDS['client_id']
-      c.MibaAzureAdOAuthenticator.client_secret = CREDS['client_secret']
-      c.MibaAzureAdOAuthenticator.username_claim = 'unique_name'
-      c.MibaAzureAdOAuthenticator.allow_all = True
-
-      # ==========================================
-      # advanced instances for selected users (1)
+      # advanced instances for selected users (option 1)
       async def miba_options_form(spawner):
         username = spawner.user.name
         try: 
@@ -443,32 +560,22 @@ hub:
 
       c.KubeSpawner.options_form = miba_options_form
      
-      # ==========================================
-      # advanced instances for selected users (2)
-      #async def miba_pre_spawn_hook(spawner):
-      #  username = spawner.user.name
-      #  if (username in <ADVANCED_HW_USERS>):
-      #    spawner.log.info(f'Spawning sever for {username} with advanced configuration')
-      #    spawner.cpu_limit = 7
-      #    spawner.mem_limit = '28G'
-      #c.KubeSpawner.pre_spawn_hook = miba_pre_spawn_hook
 
-      # ==========================================
+      # ==== (3) Extra folders mount for users ======
+     
+
+      from kubespawner.utils import get_k8s_model
+      from kubernetes_asyncio import client
+      from kubernetes_asyncio.client.models import (V1Volume, V1VolumeMount)
+      
       mnt_data = {
         'name': 'jupyterhub-data',
         'pvc': 'jupyterhub-data-pvc',
         'mountPath': '/home/jovyan/__DATA'
       }
       data_folder_users = <DATA_FOLDER_USERS>
-      
-      from kubespawner.utils import get_k8s_model
-      # older versions of Hub
-      #from kubernetes import client
-      #from kubernetes.client.models import ( V1Volume, V1VolumeMount )
-      # Hub versions since 2.x.x
-      from kubernetes_asyncio import client
-      from kubernetes_asyncio.client.models import ( V1Volume, V1VolumeMount )
-      
+
+
       def modify_pod_hook(spawner, pod):
         try:
           # mount DATA folder
@@ -514,4 +621,6 @@ hub:
         return pod
       c.KubeSpawner.modify_pod_hook = modify_pod_hook
       
-      # ================= END ====================
+      # =============================================
+      # =========== END OF CUSTOM CONFIG ============
+      # =============================================
