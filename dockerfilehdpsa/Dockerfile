@@ -1,4 +1,7 @@
-FROM jupyter/pyspark-notebook:spark-3.2.0
+# Source jupyter/pyspark-notebook is under copyright (c) Jupyter Development Team
+# and distributed under the terms of the Modified BSD License
+
+FROM quay.io/jupyter/pyspark-notebook:spark-3.5.3
 
 USER root
 
@@ -12,7 +15,6 @@ RUN apt update && apt install -y openssh-server && \
 # =================================================================
 # Hadoop installation
 # Based on https://github.com/Segence/docker-hadoop
-# by Rob Vadai https://twitter.com/robvadai
 
 RUN groupadd hadoop
 RUN useradd -d /home/hadoop -g hadoop -m hadoop --shell /bin/bash
@@ -24,20 +26,20 @@ RUN mkdir /home/hadoop/.ssh
 RUN ssh-keygen -t rsa -f /home/hadoop/.ssh/id_rsa -P '' && \
     cat /home/hadoop/.ssh/id_rsa.pub >> /home/hadoop/.ssh/authorized_keys
 
-# Installing Hadoop
-RUN wget http://apache.mirror.anlx.net/hadoop/common/hadoop-3.2.3/hadoop-3.2.3.tar.gz && \
+# Hadoop install
+RUN wget https://mirrors.huaweicloud.com/apache/hadoop/common/hadoop-3.2.3/hadoop-3.2.3.tar.gz && \
     tar -xzvf hadoop-3.2.3.tar.gz -C /usr/local/ && \
     mv /usr/local/hadoop-3.2.3/ /usr/local/hadoop && \
     rm hadoop-3.2.3.tar.gz
 
 # HBase install
-RUN wget https://dlcdn.apache.org/hbase/stable/hbase-2.5.4-bin.tar.gz && \
+RUN wget https://mirrors.huaweicloud.com/apache/hbase/2.5.4/hbase-2.5.4-bin.tar.gz && \
     tar -xzvf hbase-2.5.4-bin.tar.gz -C /usr/local/ && \
     mv /usr/local/hbase-2.5.4/ /usr/local/hbase/ && \
     rm hbase-2.5.4-bin.tar.gz
 
 # Hive install
-RUN wget https://dlcdn.apache.org/hive/hive-3.1.2/apache-hive-3.1.2-bin.tar.gz && \
+RUN wget https://mirrors.huaweicloud.com/apache/hive/hive-3.1.2/apache-hive-3.1.2-bin.tar.gz && \
     tar -xzvf apache-hive-3.1.2-bin.tar.gz -C /usr/local/ && \
     mv /usr/local/apache-hive-3.1.2-bin/ /usr/local/hive/ && \
     rm apache-hive-3.1.2-bin.tar.gz && rm -r /var/lib/apt/lists/*
@@ -84,7 +86,7 @@ COPY configshb/hbase-site.xml /usr/local/hbase/conf/
 COPY configshb/hbase-env.sh /usr/local/hbase/conf/
 COPY configshv/hive-site.xml /usr/local/hive/conf/
 
-# Adding initialisation scripts
+# Adding initialization scripts
 RUN mkdir $HADOOP_HOME/bin/init
 COPY scripts/start-hadoop.sh $HADOOP_HOME/bin/init/
 
@@ -104,7 +106,7 @@ RUN ln -s $HADOOP_HOME/logs /var/log/hadoop
 RUN mkdir -p $HBASE_HOME/logs
 RUN ln -s /data/logs/hbase $HBASE_HOME/logs
 
-# Dirs and permissions
+# Directories and permissions
 RUN chown -R hadoop:hadoop /home/hadoop
 RUN chown -R hadoop:hadoop $HADOOP_HOME
 RUN chown -R hadoop:hadoop $HBASE_HOME
@@ -114,15 +116,24 @@ RUN chmod 777 /data/logs/hadoop
 RUN chmod 777 /data/logs/hbase
 RUN chmod 777 /usr/local/hivemetastore
 
-# Danger zone redspotted!!!
+# (!) Danger zone (!)
 RUN echo "jovyan ALL=(ALL)   ALL" >> /etc/sudoers
 RUN echo "jovyan:redspot" | chpasswd
 
 # =================================================================
 
-USER ${NB_UID}
+USER $NB_UID
 
-# proxy for spark ui and etc
+# Modules, packages and libraries
+RUN pip install --no-cache-dir nbgitpuller
+
+# Jupyter extensions
 RUN pip install jupyter-server-proxy && \
-    jupyter serverextension enable --sys-prefix jupyter_server_proxy && \
-    pip install pyspark==3.2.0
+    jupyter server extension enable --sys-prefix jupyter_server_proxy
+
+# -= Future releases =-
+# Elyra extension https://github.com/elyra-ai/elyra
+# does not support JupyterLab >= 4.x
+#RUN pip install --upgrade elyra-code-snippet-extension && \
+#    pip install --upgrade elyra-python-editor-extension && \
+#    jupyter server extension enable elyra

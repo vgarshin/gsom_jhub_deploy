@@ -2,6 +2,7 @@
 
 RELEASE=jhub
 NAMESPACE=jhub
+JHVER=4.0.0
 
 cp mibaconfig.yaml mibaconfig_tmp.yaml
 
@@ -15,7 +16,7 @@ helm upgrade --cleanup-on-fail \
   --install $RELEASE jupyterhub/jupyterhub \
   --namespace $NAMESPACE \
   --create-namespace \
-  --version=3.2.0 \
+  --version=${JHVER} \
   --values mibaconfig_tmp.yaml \
   --debug
 

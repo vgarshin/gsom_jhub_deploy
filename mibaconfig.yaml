@@ -1,21 +1,21 @@
 proxy:
   secretToken: "<SECRET_TOKEN>"
   # chp relates to the proxy pod, which is responsible for routing traffic based
-  # on dynamic configuration sent from JupyterHub to CHP's REST API
+  # on dynamic configuration sent from JupyterHub to CHP's REST API.
   chp:
     image:
       name: <CR_NAME>/<CR_ID>/jupyterhub/configurable-http-proxy
-      tag: "4.6.1"
+      tag: "4.6.2"
   # traefik relates to the autohttps pod, which is responsible for TLS
-  # termination when proxy.https.type=letsencrypt
+  # termination when proxy.https.type=letsencrypt.
   traefik:
     image:
       name: <CR_NAME>/<CR_ID>/jupyterhub/traefik
-      tag: "v2.10.5"
+      tag: "v3.2.0"
   secretSync:
     image:
       name: <CR_NAME>/<CR_ID>/jupyterhub/k8s-secret-sync
-      tag: "3.2.0"
+      tag: "4.0.0"
   https:
     enabled: true
     hosts:
@@ -24,47 +24,57 @@ proxy:
       contactEmail: vgarshin@vtb.education
 
 scheduling:
-# ==========================================
-# This priority mechanism allows us to add dummy users or user-placeholders 
-# with low priority that can take up resources until a real user with 
-# (higher priority) requires it
+  # ==========================================
+  # This priority mechanism allows us to add dummy users or user-placeholders 
+  # with low priority that can take up resources until a real user with 
+  # (higher priority) requires it
   podPriority:
     enabled: true
     globalDefault: true
     defaultPriority: 10
     userPlaceholderPriority: 0
-# uncomment following lines to add dummy users
+  # uncomment following lines to add dummy users
   userPlaceholder:
     enabled: true
     replicas: 3
-# ==========================================
-# The user scheduler’s only task is to schedule new user pods to the most utilized node
+    image:
+      name: <CR_NAME>/<CR_ID>/jupyterhub/registry.k8s.io/pause
+      tag: "3.10"
+  # ==========================================
+  # The user scheduler’s only task is to schedule new user pods to the most utilized node
   userScheduler:
     enabled: true
-# ==========================================
-# If we add a taint to all the nodes in the node pool, and a toleration on the user pods 
-# to tolerate being scheduled on a tainted node, we have practically dedicated the node pool 
-# to be used only by user pods
-#  scheduling:
-#    userPods:
-#      nodeAffinity:
-#        matchNodePurpose valid options:
-#          - ignore
-#          - prefer (the default)
-#          - require
-#        matchNodePurpose: require
-# ==========================================
-# With the hook-image-puller enabled (the default), the user images being introduced 
-# will be pulled to the nodes before the hub pod is updated to utilize the new image.
+  # ==========================================
+  # If we add a taint to all the nodes in the node pool, and a toleration on the user pods 
+  # to tolerate being scheduled on a tainted node, we have practically dedicated the node pool 
+  # to be used only by user pods
+  #scheduling:
+  #  userPods:
+  #    nodeAffinity:
+  #      matchNodePurpose valid options:
+  #        - ignore
+  #        - prefer (the default)
+  #        - require
+  #      matchNodePurpose: require
+  # ==========================================
+  # With the hook-image-puller enabled (the default), the user images being introduced 
+  # will be pulled to the nodes before the hub pod is updated to utilize the new image.
+    image:
+      name: <CR_NAME>/<CR_ID>/jupyterhub/registry.k8s.io/kube-scheduler
+      tag: "v1.30.6"
 prePuller:
   hook:
     enabled: true
     image:
       name: <CR_NAME>/<CR_ID>/jupyterhub/k8s-image-awaiter
-      tag: "3.2.0"
+      tag: "4.0.0"
+  pause:
+    image:
+      name: <CR_NAME>/<CR_ID>/jupyterhub/registry.k8s.io/pause
+      tag: "3.10"
 
 # ==========================================
-# Secret for container registry password
+# Secret for container registry
 # NOTE - password's lifetime is 1 year !!!
 imagePullSecret:
   create: true
@@ -72,17 +82,18 @@ imagePullSecret:
   username: oauth
   email: vgarshin@yandex.ru
   password: <CONTAINER_REGISTRY_PASSWORD>
+# ==========================================
 
 singleuser:
   networkTools:
     image:
       name: <CR_NAME>/<CR_ID>/jupyterhub/k8s-network-tools
-      tag: "3.2.0"
+      tag: "4.0.0"
   image:
     name: <CR_NAME>/<CR_ID>/jupyterhub/k8s-singleuser-sample
-    tag: "3.2.0"
-# ==========================================
-# git clone repository at start for user
+    tag: "4.0.0"
+  # ==========================================
+  # git clone repository at start for user
   lifecycleHooks:
     postStart:
       exec:
@@ -97,18 +108,25 @@ singleuser:
             mkdir -p /home/jovyan/.local/share/jupyter/metadata;
             mkdir -p /home/jovyan/.local/share/jupyter/metadata/code-snippets;
             mv /home/jovyan/__MANUAL/code-snippets/* /home/jovyan/.local/share/jupyter/metadata/code-snippets/
-# ==========================================
-# databases credentials
+  # ==========================================
+  # databases credentials
   extraEnv:
     CLICKHOUSE_USER: "<CLICKHOUSE_LOGIN>"
     CLICKHOUSE_PASSWORD: "<CLICKHOUSE_PASSWORD>"
     POSTGRESQL_USER: "<POSTGRESQL_LOGIN>"
     POSTGRESQL_PASSWORD: "<POSTGRESQL_PASSWORD>"
-# ==========================================
-# timeout for user's server start
+  # ------------------------------------------
+  # enables JupyterLab with sudo access for users
+  #  GRANT_SUDO: "yes"
+  #  NOTEBOOK_ARGS: "--allow-root"
+  #uid: 0
+  #cmd: start-singleuser.sh
+  # ------------------------------------------
+  # ==========================================
+  # timeout for user's server start
   startTimeout: 900
-# ==========================================
-# 5 users per node config
+  # ==========================================
+  # 5 users per node config
   cpu:
     limit: 3
     guarantee: 2
@@ -117,15 +135,15 @@ singleuser:
     guarantee: 8G
   nodeSelector:
     NODETYPE: CPU
-# ==========================================
-# 3 users per node config
-#  cpu:
-#    limit: 5
-#    guarantee: 4
-#  memory:
-#    limit: 18G
-#    guarantee: 16G
-# ==========================================
+  # ==========================================
+  # 3 users per node config
+  #cpu:
+  #  limit: 5
+  #  guarantee: 4
+  #memory:
+  #  limit: 18G
+  #  guarantee: 16G
+  # ==========================================
   image:
     name: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_DSAI_NAME>
     tag: <DOCKER_IMAGE_DSAI_TAG>
@@ -149,10 +167,10 @@ singleuser:
         cpu_limit: 5
         mem_guarantee: 12G
         mem_limit: 16G
-    - display_name: "PostgreSQL environment"
-      description: "Demo PostgreSQL database for the local experiments."
+    - display_name: "Databases environment #1: PostgreSQL, SQLite"
+      description: "Demo PostgreSQL and SQLite databases for the local experiments."
       kubespawner_override:
-        image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_PG_NAME>:<DOCKER_IMAGE_PG_TAG>
+        image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_DBSAIR_NAME>:<DOCKER_IMAGE_DBSAIR_TAG>
         lifecycle_hooks:
           postStart:
             exec:
@@ -165,10 +183,10 @@ singleuser:
                   mkdir -p /home/jovyan/__MANUAL;
                   rm -r /home/jovyan/__MANUAL/*;
                   mv -f /tmp/manual/* /home/jovyan/__MANUAL
-    - display_name: "MongoDB environment"
-      description: "Demo MongoDB database for the local experiments."
+    - display_name: "Databases environment #2: MongoDB, ClickHouse"
+      description: "Demo MongoDB and ClickHouse databases for the local experiments."
       kubespawner_override:
-        image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_MONGO_NAME>:<DOCKER_IMAGE_MONGO_TAG>
+        image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_DBSAIR_NAME>:<DOCKER_IMAGE_DBSAIR_TAG>
         lifecycle_hooks:
           postStart:
             exec:
@@ -182,9 +200,9 @@ singleuser:
                   rm -r /home/jovyan/__MANUAL/*;
                   mv -f /tmp/manual/* /home/jovyan/__MANUAL
     - display_name: "Airflow environment"
-      description: "Airflow platform for the local experiments."
+      description: "Airflow platform with PostgreSQL for the local experiments."
       kubespawner_override:
-        image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_AIR_NAME>:<DOCKER_IMAGE_AIR_TAG>
+        image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_DBSAIR_NAME>:<DOCKER_IMAGE_DBSAIR_TAG>
         cpu_guarantee: 3
         cpu_limit: 4
         mem_guarantee: 10G
@@ -233,7 +251,7 @@ singleuser:
 #    - display_name: "Hadoop environment"
 #      description: "HDFS client for Hadoop cluster access."
 #      kubespawner_override:
-#        image: vgarshin/mibahadoop:20211503v2
+#        image: <CR_NAME_2>/<DOCKER_IMAGE_HDP_2_NAME>:<DOCKER_IMAGE_HDP_2_TAG>
 # ==========================================
   storage:
     capacity: 12Gi
@@ -254,7 +272,7 @@ cull:
 hub:
   image:
     name: <CR_NAME>/<CR_ID>/jupyterhub/k8s-hub
-    tag: "3.2.0"
+    tag: "4.0.0"
   config:
     Authenticator:
       admin_users:
@@ -262,13 +280,8 @@ hub:
     JupyterHub:
       admin_access: true
       authenticator_class: azuread
-# ==========================================
-# not working as expected keep for future
-#  extraFiles:
-#    miba_creds:
-#      mountPath: /etc/jupyterhub/mibacreds.json
-# ==========================================
-# clone custom JupyterHub templates into a volume
+  # ==========================================
+  # clone custom JupyterHub templates into a volume
   initContainers:
     - name: git-clone-templates
       image: <CR_NAME>/<CR_ID>/jupyterhub/alpine/git:latest
@@ -278,10 +291,10 @@ hub:
         - --branch=master
         - --depth=1
         - --
-        - https://github.com/vgarshin/gsom_jhub_ui.git
+        - <JHUB_UI_GIT_URL>/gsom_jhub_ui.git
         - /etc/jupyterhub/custom
       securityContext:
-        runAsUser: 0
+        runAsUser: 1000
       volumeMounts:
         - name: custom-templates
           mountPath: /etc/jupyterhub/custom
@@ -291,7 +304,7 @@ hub:
   extraVolumeMounts:
     - name: custom-templates
       mountPath: /etc/jupyterhub/custom
-# ==========================================
+  # ==========================================
   extraConfig:
     templates: |
       c.JupyterHub.template_paths = ['/etc/jupyterhub/custom/templates']
@@ -335,13 +348,16 @@ hub:
               self.log.error(message)
               raise ValueError(message)
           db_dict = <DB_USERS_02>
+          pfxusername = '<CLIENT_02_PREFIX>' + username
+          pfxusername = pfxusername.lower()
+          pfxusername = re.sub('[^0-9a-zA-Z]+', '', pfxusername)
           if db_dict:
-            return db_dict['<CLIENT_02_PREFIX>' + username]
+            return db_dict[pfxusername] if pfxusername in db_dict.keys() else pfxusername
           else:
-            return '<CLIENT_02_PREFIX>' + username
+            return pfxusername
 
 
-      # based on https://github.com/jupyterhub/oauthenticator/issues/136
+      # Based on https://github.com/jupyterhub/oauthenticator/issues/136
       class MultiOAuthenticator(Authenticator):
         authenticators = List(help='Authenticators to use', config=True)
 
@@ -492,7 +508,7 @@ hub:
                 'slug': 'datascience-environment-adv',
                 'kubespawner_override':
                   {
-                    'image': '<CR_NAME>/<CR_ID>/<DOCKER_IMAGE_DSAI_ADV_NAME>:<DOCKER_IMAGE_DSAI_ADV_TAG>',
+                    'image': '<CR_NAME>/<CR_ID>/<DOCKER_IMAGE_DSAI_NAME>:<DOCKER_IMAGE_DSAI_TAG>',
                     'cpu_limit': cpu_limit,
                     'cpu_guarantee': cpu_guarantee,
                     'mem_limit': mem_limit,
@@ -540,7 +556,7 @@ hub:
                 'slug': 'gpu-environment-adv',
                 'kubespawner_override':
                   {
-                    'image': '<CR_NAME>/<CR_ID>/<DOCKER_IMAGE_DSAI_ADV_NAME>:<DOCKER_IMAGE_DSAI_ADV_TAG>',
+                    'image': '<CR_NAME>/<CR_ID>/<DOCKER_IMAGE_DSAI_GPU_NAME>:<DOCKER_IMAGE_DSAI_GPU_TAG>',
                     'cpu_limit': cpu_limit,
                     'cpu_guarantee': cpu_guarantee,
                     'mem_limit': mem_limit,
@@ -621,6 +637,7 @@ hub:
         return pod
       c.KubeSpawner.modify_pod_hook = modify_pod_hook
       
+
       # =============================================
       # =========== END OF CUSTOM CONFIG ============
       # =============================================

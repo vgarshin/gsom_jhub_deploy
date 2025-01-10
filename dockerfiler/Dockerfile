@@ -1,22 +1,7 @@
 # Source jupyter/minimal-notebook is under copyright (c) Jupyter Development Team
 # and distributed under the terms of the Modified BSD License
 
-FROM quay.io/jupyter/minimal-notebook:python-3.12.7
-
-USER root
-
-# Do not exclude man pages & other documentation
-RUN rm /etc/dpkg/dpkg.cfg.d/excludes
-
-# Reinstall all currently installed packages in order to get the man pages back
-RUN apt-get update && \
-    dpkg -l | grep ^ii | cut -d' ' -f3 | xargs apt-get install -y --reinstall && \
-    apt install tree htop tmux -y && \
-    apt install man-db manpages manpages-posix -y && \
-    mv /usr/bin/man.REAL /usr/bin/man -f && \
-    rm -r /var/lib/apt/lists/*
-
-USER $NB_UID
+FROM quay.io/jupyter/r-notebook:python-3.12.7
 
 RUN pip install --upgrade pip
 

@@ -1,5 +1,5 @@
 # Initialization of database and credentials
-airflow db init && airflow users create \
+airflow db migrate && airflow users create \
   --username airflow \
   --firstname ${JUPYTERHUB_USER} \
   --lastname ${HOSTNAME} \
@@ -8,7 +8,8 @@ airflow db init && airflow users create \
   --password airflow 
 
 # Start Airflow server
-airflow webserver &>/dev/null & disown;
+rm /home/${NB_USER}/airflow/*.pid && \
+  airflow webserver &>/dev/null & disown;
 
 # Start scheduler
 airflow scheduler &>/dev/null & disown;
