@@ -10,10 +10,10 @@ ENV FF_VER 105.0
 ENV FF_DIR /dist
 
 RUN apt update -y && apt upgrade -y && \
-    apt install -y libgtk-3-common libasound2t64 libdbus-glib-1-2 && \
-    apt install sqlite3 -y && \
+    apt install -y libgtk-3-common libasound2t64 libdbus-glib-1-2 libmagic-dev && \
+    apt install -y sqlite3 -y && \
     apt install -y tesseract-ocr tesseract-ocr-rus && \
-    apt install -y poppler-utils
+    apt install -y poppler-utils antiword libreoffice pandoc
 
 RUN mkdir -p $FF_DIR && cd $FF_DIR && \
     wget -O - https://ftp.mozilla.org/pub/firefox/releases/$FF_VER/linux-x86_64/en-US/firefox-$FF_VER.tar.bz2 | tar -xjf -
@@ -62,3 +62,6 @@ RUN pip install jupyter-server-proxy && \
 #RUN pip install --upgrade elyra-code-snippet-extension && \
 #    pip install --upgrade elyra-python-editor-extension && \
 #    jupyter server extension enable elyra
+
+# Test grading system
+RUN pip install otter-grader

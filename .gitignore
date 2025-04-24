@@ -1,0 +1,9 @@
+**/_backup
+**/.vscode
+old/
+support/
+s3mountvk/
+*.bak
+*.txt
+*.log
+test.py

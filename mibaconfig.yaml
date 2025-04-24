@@ -111,6 +111,7 @@ singleuser:
   # ==========================================
   # databases credentials
   extraEnv:
+    JUPYTERHUB_HOST_NAME: "<HOST_NAME>"
     CLICKHOUSE_USER: "<CLICKHOUSE_LOGIN>"
     CLICKHOUSE_PASSWORD: "<CLICKHOUSE_PASSWORD>"
     POSTGRESQL_USER: "<POSTGRESQL_LOGIN>"
@@ -124,7 +125,7 @@ singleuser:
   # ------------------------------------------
   # ==========================================
   # timeout for user's server start
-  startTimeout: 900
+  startTimeout: 300
   # ==========================================
   # 5 users per node config
   cpu:
@@ -460,6 +461,7 @@ hub:
           'allowed_users': <ALLOWED_USERS_02>
         })
       ]
+      
       c.JupyterHub.authenticator_class = MultiOAuthenticator
 
 
