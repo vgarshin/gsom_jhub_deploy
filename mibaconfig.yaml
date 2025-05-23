@@ -247,6 +247,10 @@ singleuser:
       description: "Popular packages from the R ecosystem."
       kubespawner_override:
         image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_R_NAME>:<DOCKER_IMAGE_R_TAG>
+    - display_name: "C++ environment"
+      description: "Jupyter kernel for C++ based on the C++ interpreter cling."
+      kubespawner_override:
+        image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_CPP_NAME>:<DOCKER_IMAGE_CPP_TAG>
 # ==========================================
 # Hadoop client image
 #    - display_name: "Hadoop environment"
