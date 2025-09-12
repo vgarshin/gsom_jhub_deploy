@@ -27,6 +27,9 @@ RUN pip install --no-cache-dir nbgitpuller
 RUN pip install jupyter-server-proxy && \
     jupyter server extension enable --sys-prefix jupyter_server_proxy
 
+# Jupyterlab language packs install
+RUN pip install --no-cache-dir jupyterlab_language_pack_ru_RU
+
 # -= Future releases =-
 # Elyra extension https://github.com/elyra-ai/elyra
 # does not support JupyterLab >= 4.x

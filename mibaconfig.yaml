@@ -35,8 +35,8 @@ scheduling:
     userPlaceholderPriority: 0
   # uncomment following lines to add dummy users
   userPlaceholder:
-    enabled: true
-    replicas: 3
+    enabled: false
+    replicas: 1
     image:
       name: <CR_NAME>/<CR_ID>/jupyterhub/registry.k8s.io/pause
       tag: "3.10"
@@ -129,11 +129,11 @@ singleuser:
   # ==========================================
   # 5 users per node config
   cpu:
-    limit: 3
-    guarantee: 2
+    limit: 2
+    guarantee: 1
   memory:
-    limit: 10G
-    guarantee: 8G
+    limit: 6G
+    guarantee: 3G
   nodeSelector:
     NODETYPE: CPU
   # ==========================================
@@ -151,25 +151,29 @@ singleuser:
   profileList:
     - display_name: "Data Science environment"
       description: "All libraries for Data Science courses and labs."
+      slug: "data-science-environment"
       default: true
     - display_name: "Minimal Python environment"
       description: "Pure Python with some libraries and Unix man packages."
+      slug: "minimal-python-environment"
       kubespawner_override:
         image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_MINPY_NAME>:<DOCKER_IMAGE_MINPY_TAG>
-        cpu_guarantee: 1
-        cpu_limit: 2
-        mem_guarantee: 2G
-        mem_limit: 4G
+        cpu_guarantee: 0.5
+        cpu_limit: 1
+        mem_guarantee: 1G
+        mem_limit: 2G
     - display_name: "Spark environment"
       description: "Jupyter and PySpark image with S3 access."
+      slug: "pyspark-s3-environment"
       kubespawner_override:
         image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_SPARK_NAME>:<DOCKER_IMAGE_SPARK_TAG>
-        cpu_guarantee: 4
-        cpu_limit: 5
-        mem_guarantee: 12G
-        mem_limit: 16G
+        cpu_guarantee: 1
+        cpu_limit: 2
+        mem_guarantee: 3G
+        mem_limit: 6G
     - display_name: "Databases environment #1: PostgreSQL, SQLite"
       description: "Demo PostgreSQL and SQLite databases for the local experiments."
+      slug: "databases-1-environment"
       kubespawner_override:
         image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_DBSAIR_NAME>:<DOCKER_IMAGE_DBSAIR_TAG>
         lifecycle_hooks:
@@ -186,6 +190,7 @@ singleuser:
                   mv -f /tmp/manual/* /home/jovyan/__MANUAL
     - display_name: "Databases environment #2: MongoDB, ClickHouse"
       description: "Demo MongoDB and ClickHouse databases for the local experiments."
+      slug: "databases-2-environment"
       kubespawner_override:
         image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_DBSAIR_NAME>:<DOCKER_IMAGE_DBSAIR_TAG>
         lifecycle_hooks:
@@ -202,12 +207,13 @@ singleuser:
                   mv -f /tmp/manual/* /home/jovyan/__MANUAL
     - display_name: "Airflow environment"
       description: "Airflow platform with PostgreSQL for the local experiments."
+      slug: "airflow-environment"
       kubespawner_override:
         image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_DBSAIR_NAME>:<DOCKER_IMAGE_DBSAIR_TAG>
-        cpu_guarantee: 3
-        cpu_limit: 4
-        mem_guarantee: 10G
-        mem_limit: 12G
+        cpu_guarantee: 1
+        cpu_limit: 2
+        mem_guarantee: 3G
+        mem_limit: 6G
         lifecycle_hooks:
           postStart:
             exec:
@@ -224,12 +230,13 @@ singleuser:
                   yes | cp -rf /usr/local/etc/airflow/airflow.cfg /home/jovyan/airflow/
     - display_name: "Hadoop (with YARN) and Spark environment"
       description: "Hadoop mini-cluster with Map-Reduce operations and standalone Spark."
+      slug: "hadoop-spark-environment"
       kubespawner_override:
         image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_HDP_NAME>:<DOCKER_IMAGE_HDP_TAG>
-        cpu_guarantee: 3
-        cpu_limit: 4
-        mem_guarantee: 10G
-        mem_limit: 12G
+        cpu_guarantee: 1
+        cpu_limit: 2
+        mem_guarantee: 3G
+        mem_limit: 6G
         lifecycle_hooks:
           postStart:
             exec:
@@ -245,10 +252,12 @@ singleuser:
                   mv -f /tmp/manual/* /home/jovyan/__MANUAL
     - display_name: "R environment"
       description: "Popular packages from the R ecosystem."
+      slug: "r-environment"
       kubespawner_override:
         image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_R_NAME>:<DOCKER_IMAGE_R_TAG>
     - display_name: "C++ environment"
       description: "Jupyter kernel for C++ based on the C++ interpreter cling."
+      slug: "jupyter-cpp-environment"
       kubespawner_override:
         image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_CPP_NAME>:<DOCKER_IMAGE_CPP_TAG>
 # ==========================================
