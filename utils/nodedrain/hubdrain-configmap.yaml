@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hubdrain-script
+  namespace: jhub
+data:
+  hubdrain.sh: |
+    #!/usr/bin/env bash
+
+    echo $(date) - drain script started
+    kubectl get node -n jhub | while read s; do
+      ws=($s)
+      if [[ ${ws[0]} != NAME ]]; then
+        np=$(kubectl get pods -o wide -n jhub | grep ${ws[0]} | wc -l)
+        npup=$(kubectl get pods -o wide -n jhub | grep ${ws[0]} | grep -o 'user-placeholder' | wc -l)
+        if [[ $((${np}-${npup})) > 1 ]]; then
+          echo $(date) - node ${ws[0]} has $((${np}-${npup})) podes in jhub namespace
+        else
+          echo $(date) - node ${ws[0]} has no user pods in jhub namespace and will be drained
+          kubectl drain ${ws[0]} --ignore-daemonsets --delete-emptydir-data --force
+        fi
+      fi
+    done
+    echo $(date) - drain script finished
