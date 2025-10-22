@@ -6,11 +6,11 @@
 # or 0 */12 * * *  - to run every 12 hours
 
 echo $(date) - drain script started
-/usr/bin/kubectl get node -n jhub | while read s; do
+kubectl get node -n jhub | while read s; do
   ws=($s)
   if [[ ${ws[0]} != NAME ]]; then
-    np=$(/usr/bin/kubectl get pods -o wide -n jhub | grep ${ws[0]} | wc -l)
-    npup=$(/usr/bin/kubectl get pods -o wide -n jhub | grep ${ws[0]} | grep -o 'user-placeholder' | wc -l)
+    np=$(kubectl get pods -o wide -n jhub | grep ${ws[0]} | grep -v hubdrain-cronjob | wc -l)
+    npup=$(kubectl get pods -o wide -n jhub | grep ${ws[0]} | grep -o 'user-placeholder' | wc -l)
     if [[ $((${np}-${npup})) > 1 ]]; then
       echo $(date) - node ${ws[0]} has $((${np}-${npup})) podes in jhub namespace
     else
