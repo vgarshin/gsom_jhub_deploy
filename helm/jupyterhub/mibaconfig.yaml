@@ -1,0 +1,784 @@
+proxy:
+  secretToken: "<SECRET_TOKEN>"
+  # chp relates to the proxy pod, which is responsible for routing traffic based
+  # on dynamic configuration sent from JupyterHub to CHP's REST API.
+  chp:
+    image:
+      name: <CR_NAME>/<CR_ID>/jupyterhub/configurable-http-proxy
+      tag: "4.6.2"
+  # traefik relates to the autohttps pod, which is responsible for TLS
+  # termination when proxy.https.type=letsencrypt.
+  traefik:
+    image:
+      name: <CR_NAME>/<CR_ID>/jupyterhub/traefik
+      tag: "v3.2.0"
+  secretSync:
+    image:
+      name: <CR_NAME>/<CR_ID>/jupyterhub/k8s-secret-sync
+      tag: "4.0.0"
+  https:
+    enabled: true
+    hosts:
+      - <HOST_NAME>
+    letsencrypt:
+      contactEmail: vgarshin@vtb.education
+
+scheduling:
+  # ==========================================
+  # This priority mechanism allows us to add dummy users or user-placeholders 
+  # with low priority that can take up resources until a real user with 
+  # (higher priority) requires it
+  podPriority:
+    enabled: true
+    globalDefault: true
+    defaultPriority: 10
+    userPlaceholderPriority: 0
+  # set `enabled: true` to add dummy users
+  userPlaceholder:
+    enabled: true
+    replicas: 2
+    image:
+      name: <CR_NAME>/<CR_ID>/jupyterhub/registry.k8s.io/pause
+      tag: "3.10"
+  # ==========================================
+  # The user scheduler’s only task is to schedule new user pods to the most utilized node
+  userScheduler:
+    enabled: true
+  # ==========================================
+  # If we add a taint to all the nodes in the node pool, and a toleration on the user pods 
+  # to tolerate being scheduled on a tainted node, we have practically dedicated the node pool 
+  # to be used only by user pods
+  #scheduling:
+  #  userPods:
+  #    nodeAffinity:
+  #      matchNodePurpose valid options:
+  #        - ignore
+  #        - prefer (the default)
+  #        - require
+  #      matchNodePurpose: require
+  # ==========================================
+  # With the hook-image-puller enabled (the default), the user images being introduced 
+  # will be pulled to the nodes before the hub pod is updated to utilize the new image.
+    image:
+      name: <CR_NAME>/<CR_ID>/jupyterhub/registry.k8s.io/kube-scheduler
+      tag: "v1.30.6"
+prePuller:
+  hook:
+    enabled: true
+    image:
+      name: <CR_NAME>/<CR_ID>/jupyterhub/k8s-image-awaiter
+      tag: "4.0.0"
+  pause:
+    image:
+      name: <CR_NAME>/<CR_ID>/jupyterhub/registry.k8s.io/pause
+      tag: "3.10"
+
+# ==========================================
+# Secret for container registry
+# NOTE - password's lifetime is 1 year !!!
+imagePullSecret:
+  create: true
+  registry: <CR_NAME>
+  username: oauth
+  email: vgarshin@yandex.ru
+  password: <CONTAINER_REGISTRY_PASSWORD>
+# ==========================================
+
+singleuser:
+  networkTools:
+    image:
+      name: <CR_NAME>/<CR_ID>/jupyterhub/k8s-network-tools
+      tag: "4.0.0"
+  image:
+    name: <CR_NAME>/<CR_ID>/jupyterhub/k8s-singleuser-sample
+    tag: "4.0.0"
+  # ==========================================
+  # git clone repository at start for user
+  lifecycleHooks:
+    postStart:
+      exec:
+        command:
+          - "bash"
+          - "-c"
+          - >
+            git clone https://github.com/vgarshin/gsom_jhub_manual /tmp/manual;
+            mkdir -p /home/jovyan/__MANUAL;
+            rm -r /home/jovyan/__MANUAL/*;
+            mv -f /tmp/manual/* /home/jovyan/__MANUAL;
+            mkdir -p /home/jovyan/.local/share/jupyter/metadata;
+            mkdir -p /home/jovyan/.local/share/jupyter/metadata/code-snippets;
+            mv /home/jovyan/__MANUAL/code-snippets/* /home/jovyan/.local/share/jupyter/metadata/code-snippets/
+  # ==========================================
+  # databases credentials
+  extraEnv:
+    JUPYTERHUB_HOST_NAME: "<HOST_NAME>"
+  #  CLICKHOUSE_USER: "<CLICKHOUSE_LOGIN>"
+  #  CLICKHOUSE_PASSWORD: "<CLICKHOUSE_PASSWORD>"
+    POSTGRESQL_USER: "<POSTGRESQL_LOGIN>"
+    POSTGRESQL_PASSWORD: "<POSTGRESQL_PASSWORD>"
+  # ------------------------------------------
+  # enables JupyterLab with sudo access for users
+  #  GRANT_SUDO: "yes"
+  #  NOTEBOOK_ARGS: "--allow-root"
+  #uid: 0
+  #cmd: start-singleuser.sh
+  # ------------------------------------------
+  # ==========================================
+  # timeout for user's server start
+  startTimeout: 300
+  # ==========================================
+  # 5 users per node config
+  cpu:
+    limit: 2
+    guarantee: 1
+  memory:
+    limit: 6G
+    guarantee: 3G
+  nodeSelector:
+    NODETYPE: CPU
+  # ==========================================
+  # 3 users per node config
+  #cpu:
+  #  limit: 5
+  #  guarantee: 4
+  #memory:
+  #  limit: 18G
+  #  guarantee: 16G
+  # ==========================================
+  image:
+    name: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_DSAI_NAME>
+    tag: <DOCKER_IMAGE_DSAI_TAG>
+  profileList:
+    - display_name: "Data Science environment"
+      description: "All libraries for Data Science courses and labs."
+      slug: "data-science-environment"
+      default: true
+    - display_name: "Minimal Python environment"
+      description: "Pure Python with some libraries and Unix man packages."
+      slug: "minimal-python-environment"
+      kubespawner_override:
+        image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_MINPY_NAME>:<DOCKER_IMAGE_MINPY_TAG>
+        cpu_guarantee: 0.5
+        cpu_limit: 1
+        mem_guarantee: 1G
+        mem_limit: 2G
+    - display_name: "Spark environment"
+      description: "Jupyter and PySpark image with S3 access."
+      slug: "pyspark-s3-environment"
+      kubespawner_override:
+        image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_SPARK_NAME>:<DOCKER_IMAGE_SPARK_TAG>
+        cpu_guarantee: 1
+        cpu_limit: 2
+        mem_guarantee: 3G
+        mem_limit: 6G
+    - display_name: "Databases environment #1: PostgreSQL, SQLite"
+      description: "Demo PostgreSQL and SQLite databases for the local experiments."
+      slug: "databases-1-environment"
+      kubespawner_override:
+        image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_DBSAIR_NAME>:<DOCKER_IMAGE_DBSAIR_TAG>
+        lifecycle_hooks:
+          postStart:
+            exec:
+              command:
+                - "bash"
+                - "-c"
+                - >
+                  echo redspot | sudo -S service postgresql start;
+                  git clone https://github.com/vgarshin/gsom_jhub_manual /tmp/manual;
+                  mkdir -p /home/jovyan/__MANUAL;
+                  rm -r /home/jovyan/__MANUAL/*;
+                  mv -f /tmp/manual/* /home/jovyan/__MANUAL
+    - display_name: "Databases environment #2: MongoDB, ClickHouse"
+      description: "Demo MongoDB and ClickHouse databases for the local experiments."
+      slug: "databases-2-environment"
+      kubespawner_override:
+        image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_DBSAIR_NAME>:<DOCKER_IMAGE_DBSAIR_TAG>
+        lifecycle_hooks:
+          postStart:
+            exec:
+              command:
+                - "bash"
+                - "-c"
+                - >
+                  echo redspot | sudo -S mongod --dbpath /var/lib/mongo --logpath /var/log/mongodb/mongod.log --fork;
+                  git clone https://github.com/vgarshin/gsom_jhub_manual /tmp/manual;
+                  mkdir -p /home/jovyan/__MANUAL;
+                  rm -r /home/jovyan/__MANUAL/*;
+                  mv -f /tmp/manual/* /home/jovyan/__MANUAL
+    - display_name: "Airflow environment"
+      description: "Airflow platform with PostgreSQL for the local experiments."
+      slug: "airflow-environment"
+      kubespawner_override:
+        image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_DBSAIR_NAME>:<DOCKER_IMAGE_DBSAIR_TAG>
+        cpu_guarantee: 1
+        cpu_limit: 2
+        mem_guarantee: 3G
+        mem_limit: 6G
+        lifecycle_hooks:
+          postStart:
+            exec:
+              command:
+                - "bash"
+                - "-c"
+                - >
+                  echo redspot | sudo -S service postgresql start;
+                  git clone https://github.com/vgarshin/gsom_jhub_manual /tmp/manual;
+                  mkdir -p /home/jovyan/__MANUAL;
+                  rm -r /home/jovyan/__MANUAL/*;
+                  mv -f /tmp/manual/* /home/jovyan/__MANUAL;
+                  mkdir -p /home/jovyan/airflow;
+                  yes | cp -rf /usr/local/etc/airflow/airflow.cfg /home/jovyan/airflow/
+    - display_name: "Hadoop (with YARN) and Spark environment"
+      description: "Hadoop mini-cluster with Map-Reduce operations and standalone Spark."
+      slug: "hadoop-spark-environment"
+      kubespawner_override:
+        image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_HDP_NAME>:<DOCKER_IMAGE_HDP_TAG>
+        cpu_guarantee: 1
+        cpu_limit: 2
+        mem_guarantee: 3G
+        mem_limit: 6G
+        lifecycle_hooks:
+          postStart:
+            exec:
+              command:
+                - "bash"
+                - "-c"
+                - >
+                  echo redspot | sudo -S service ssh start && sudo runuser hadoop -s /bin/bash -c "export HBASE_HOME=/usr/local/hbase && export HBASE_CONF_DIR=/usr/local/hbase/conf && export PATH=$PATH:$JAVA_HOME/bin:/usr/local/hadoop/bin:/usr/local/hadoop/sbin:/usr/local/hbase/bin:/usr/local/hbase/sbin && export APPLICATION_WEB_PROXY_BASE=user/${JUPYTERHUB_USER}/proxy/8088 && export HADOOP_HOME=/usr/local/hadoop && export HADOOP_CONF_DIR=$HADOOP_HOME/etc/hadoop && /usr/local/hadoop/bin/init/start-hadoop.sh && hdfs dfs -mkdir /jovyan && hdfs dfs -chown -R jovyan:hadoopusers /jovyan && hadoop fs -chmod -R 777 /tmp && start-hbase.sh && hdfs dfs -mkdir /user && hdfs dfs -mkdir /user/hive && hdfs dfs -mkdir /user/hive/warehouse && hdfs dfs -chmod g+w /user/hive/warehouse && hdfs dfs -chown -R jovyan:hadoopusers /user";
+                  schematool -dbType derby -initSchema;
+                  git clone https://github.com/vgarshin/gsom_jhub_manual /tmp/manual;
+                  mkdir -p /home/jovyan/__MANUAL;
+                  rm -r /home/jovyan/__MANUAL/*;
+                  mv -f /tmp/manual/* /home/jovyan/__MANUAL
+    - display_name: "R environment"
+      description: "Popular packages from the R ecosystem."
+      slug: "r-environment"
+      kubespawner_override:
+        image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_R_NAME>:<DOCKER_IMAGE_R_TAG>
+    - display_name: "C++ environment"
+      description: "Jupyter kernel for C++ based on the C++ interpreter cling."
+      slug: "jupyter-cpp-environment"
+      kubespawner_override:
+        image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_CPP_NAME>:<DOCKER_IMAGE_CPP_TAG>
+# ==========================================
+# Hadoop client image
+#    - display_name: "Hadoop environment"
+#      description: "HDFS client for Hadoop cluster access."
+#      kubespawner_override:
+#        image: <CR_NAME_2>/<DOCKER_IMAGE_HDP_2_NAME>:<DOCKER_IMAGE_HDP_2_TAG>
+# ==========================================
+  storage:
+    capacity: 12Gi
+    extraVolumes:
+      - name: jupyterhub-shared
+        persistentVolumeClaim:
+          claimName: jupyterhub-shared-pvc
+    extraVolumeMounts:
+      - name: jupyterhub-shared
+        mountPath: /home/jovyan/__SHARED
+  allowPrivilegeEscalation: true
+
+cull:
+  enabled: true
+  timeout: 3600
+  every: 600
+
+hub:
+  image:
+    name: <CR_NAME>/<CR_ID>/jupyterhub/k8s-hub
+    tag: "4.0.0"
+  config:
+    Authenticator:
+      admin_users:
+        - <JUPYTERHUB_ADMIN>
+    JupyterHub:
+      admin_access: true
+      authenticator_class: azuread
+  # ==========================================
+  # clone custom JupyterHub templates into a volume
+  initContainers:
+    - name: git-clone-templates
+      image: <CR_NAME>/<CR_ID>/jupyterhub/alpine/git:latest
+      args:
+        - clone
+        - --single-branch
+        - --branch=master
+        - --depth=1
+        - --
+        - <JHUB_UI_GIT_URL>/gsom_jhub_ui.git
+        - /etc/jupyterhub/custom
+      securityContext:
+        runAsUser: 1000
+      volumeMounts:
+        - name: custom-templates
+          mountPath: /etc/jupyterhub/custom
+  extraVolumes:
+    - name: custom-templates
+      emptyDir: {}
+  extraVolumeMounts:
+    - name: custom-templates
+      mountPath: /etc/jupyterhub/custom
+  # ==========================================
+  extraConfig:
+    templates: |
+      c.JupyterHub.template_paths = ['/etc/jupyterhub/custom/templates']
+    simbaConfig: |
+      # =============================================
+      # ========== START OF CUSTOM CONFIG ===========
+      # =============================================
+
+
+      # =========== (I) Authentication ==============
+
+
+      import re
+      import json
+      from traitlets import List
+      from jupyterhub.auth import Authenticator
+      from oauthenticator.github import GitHubOAuthenticator
+      from oauthenticator.azuread import AzureAdOAuthenticator
+      from oauthenticator.oauth2 import OAuthenticator
+
+
+      class SimbaAzureAdOAuthenticator(AzureAdOAuthenticator):
+        def normalize_username(self, username):
+          username = username.split('@')[0]
+          username = username.lower()
+          username = re.sub('[^0-9a-zA-Z]+', '', username)
+          username = self.username_map.get(username, username)
+          return username
+
+
+      class SimbaYaOAuthenticator(OAuthenticator):
+        def user_info_to_username(self, user_info):
+          if callable(self.username_claim):
+              username = self.username_claim(user_info)
+          else:
+              username = user_info.get(self.username_claim, None)
+          if not username:
+              message = (
+                  f'No {self.username_claim} found in {user_info}. Maybe the hub needs to be configured to request more scopes?',
+              )
+              self.log.error(message)
+              raise ValueError(message)
+          db_dict = <DB_USERS_02>
+          pfxusername = '<CLIENT_02_PREFIX>' + username
+          pfxusername = pfxusername.lower()
+          pfxusername = re.sub('[^0-9a-zA-Z]+', '', pfxusername)
+          if db_dict:
+            return db_dict[pfxusername] if pfxusername in db_dict.keys() else pfxusername
+          else:
+            return pfxusername
+
+
+      # Based on https://github.com/jupyterhub/oauthenticator/issues/136
+      class MultiOAuthenticator(Authenticator):
+        authenticators = List(help='Authenticators to use', config=True)
+
+        def __init__(self, *arg, **kwargs):
+          super().__init__(*arg, **kwargs)
+          self._authenticators = []
+          for auth_class, url_scope, configs in self.authenticators:
+            instance = auth_class(**configs)
+            login_url = instance.login_url('')
+            instance._url_scope = url_scope
+            instance._login_url = login_url
+            
+            def custom_login_url(self, base_url):
+              return url_path_join(base_url, self._url_scope, self._login_url)
+            
+            instance.login_url = custom_login_url.__get__(instance, auth_class)
+            self._authenticators.append({
+              'instance': instance,
+              'url_scope': url_scope,
+            })
+        
+        def get_handlers(self, app):
+          routes = []
+          for _auth in self._authenticators:
+            for path, handler in _auth['instance'].get_handlers(app):
+
+              class SubHandler(handler):
+                  authenticator = _auth['instance']
+
+              routes.append((f'{_auth["url_scope"]}{path}', SubHandler))
+          print('routes', routes)
+          return routes
+        
+        def get_custom_html(self, base_url):
+          html = [
+            '<div class="service-login">',
+            '<h1 class="text-center">Welcome to SimBA</h1>',
+            """
+            <p style="text-align:center">
+              SimBA or Simulation platform for Business Analytics and Big Data is a flexible and powerful tool<br>
+              for the students, teachers and researches of Graduate School of Management SPbU (GSOM SPbU).<br>
+              The platform is based on JupyterHub and it is free for all users with GSOM account<br>
+              <br>
+              Join our <a href="https://t.me/simbaplatform" target="_blank">SimBA channel</a> to keep up to date with SimBA's events<br>
+              and may the Force of Data Analytics be with You!
+            </p>
+            """,
+            """
+            <p id='insecure-login-warning' class='hidden'>
+            Warning: JupyterHub seems to be served over an unsecured HTTP connection.
+            We strongly recommend enabling HTTPS for JupyterHub.
+            </p>
+            """
+          ]
+          for authenticator in self._authenticators:
+            login_service = authenticator['instance'].login_service or "Local User"
+            url = authenticator['instance'].login_url(base_url)
+            html.append(
+              f"""
+              <div style="margin-bottom:10px;">
+                <a style="width:30%;" role="button" class='btn btn-jupyter btn-lg' href='{url}'>
+                Sign in with {login_service}
+                </a>
+              </div>
+              """
+            )
+          footer_html = [
+            """
+            <div class="contentRight">
+              <a href="https://t.me/simbaplatform">
+                <img src="https://storage.yandexcloud.net/gsom-design-elements/simba-logo-nano.png" alt="SimBA logo">
+              </a>
+            </div>
+            """,
+            '</div>',
+          ]
+          return '\n'.join(html + footer_html)
+
+      
+      c.MultiOAuthenticator.authenticators = [
+        (SimbaAzureAdOAuthenticator, '/azuread', {
+          'tenant_id': '<TENANT_01_ID>',
+          'client_id': '<CLIENT_01_ID>',
+          'client_secret': '<CLIENT_01_SECRET>',
+          'oauth_callback_url': 'https://<HOST_NAME>/hub/azuread/oauth_callback',
+          'username_claim': 'unique_name',
+          'allow_all': True,
+          #'allowed_users': <ALLOWED_USERS_01>
+        }),
+        (SimbaYaOAuthenticator, '/yandexid', {
+          'client_id': '<CLIENT_02_ID>',
+          'client_secret': '<CLIENT_02_SECRET>',
+          'oauth_callback_url': 'https://<HOST_NAME>/hub/yandexid/oauth_callback',
+          'login_service': 'Yandex.Passport',
+          'username_claim':'login',
+          'authorize_url': 'https://oauth.yandex.ru/authorize',
+          'token_url': 'https://oauth.yandex.ru/token',
+          'userdata_url': 'https://login.yandex.ru/info',
+          #'allow_all': True,
+          'allowed_users': <ALLOWED_USERS_02>
+        })
+      ]
+      
+      c.JupyterHub.authenticator_class = MultiOAuthenticator
+
+
+      # ===== (2) Advanced users configuration ======
+
+
+      import hmac
+      import hashlib
+      import requests
+      import datetime
+      from urllib.parse import urlencode
+
+
+      def json_from_bucket(bucket_name, object_key, access_key, secret_key, region='ru-central1'):
+        """
+        Reads users.json file from Yandex Cloud S3 bucket and returns as Python object
+        
+        Args:
+            bucket_name (str): Bucket name
+            object_key (str): Object key (file path)
+            access_key (str): Access Key ID
+            secret_key (str): Secret Access Key
+            region (str): Bucket region
+        
+        Returns:
+            dict/list: Parsed JSON object or None in case of error
+            
+        """
+        method = 'GET'
+        endpoint = 'storage.yandexcloud.net'
+        service = 's3'
+        host = f'{bucket_name}.{endpoint}'
+        canonical_uri = f'/{object_key}'
+        
+        t = datetime.datetime.utcnow()
+        amz_date = t.strftime('%Y%m%dT%H%M%SZ')
+        date_stamp = t.strftime('%Y%m%d')
+        
+        canonical_querystring = ''
+        canonical_headers = f'host:{host}\nx-amz-content-sha256:UNSIGNED-PAYLOAD\nx-amz-date:{amz_date}\n'
+        signed_headers = 'host;x-amz-content-sha256;x-amz-date'
+        payload_hash = 'UNSIGNED-PAYLOAD'    
+        canonical_request = f'{method}\n{canonical_uri}\n{canonical_querystring}\n{canonical_headers}\n{signed_headers}\n{payload_hash}'
+        
+        algorithm = 'AWS4-HMAC-SHA256'
+        credential_scope = f'{date_stamp}/{region}/{service}/aws4_request'
+        string_to_sign = f'{algorithm}\n{amz_date}\n{credential_scope}\n{hashlib.sha256(canonical_request.encode()).hexdigest()}'
+
+        
+        def sign(key, msg):
+            """
+            Signature calculation.
+            
+            """
+            return hmac.new(key, msg.encode('utf-8'), hashlib.sha256).digest()
+
+        
+        k_date = sign(('AWS4' + secret_key).encode('utf-8'), date_stamp)
+        k_region = sign(k_date, region)
+        k_service = sign(k_region, service)
+        k_signing = sign(k_service, 'aws4_request')
+        signature = hmac.new(k_signing, string_to_sign.encode('utf-8'), hashlib.sha256).hexdigest()
+        
+        authorization_header = f'{algorithm} Credential={access_key}/{credential_scope}, SignedHeaders={signed_headers}, Signature={signature}'
+        headers = {
+            'Host': host,
+            'x-amz-date': amz_date,
+            'x-amz-content-sha256': payload_hash,
+            'Authorization': authorization_header
+        }
+        url = f'https://{host}{canonical_uri}'
+        
+        try:
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()
+            json_data = json.loads(response.text)
+            return json_data
+            
+        except json.JSONDecodeError as e:
+            print(f"JSON parsing error: {e}")
+            print(f"Received text: {response.text[:100]}...")
+            return None
+            
+        except requests.exceptions.RequestException as e:
+            print(f"Error reading file: {e}")
+            if hasattr(e, 'response') and e.response is not None:
+                print(f"Status code: {e.response.status_code}")
+                print(f"Response: {e.response.text[:500]}...")
+            return None
+
+
+      # advanced instances for selected users (option 1)
+      async def miba_options_form(spawner):
+        username = spawner.user.name
+
+        users_data = json_from_bucket(
+          bucket_name="<SMB_BUCKET_NAME>",
+          object_key="<SMB_FILE_KEY>",
+          access_key="<SMB_AWS_ACCESS_KEY_ID>",
+          secret_key="<SMB_AWS_SECRET_ACCESS_KEY>"
+        )
+
+        try: 
+          
+          # Data Science AI bot
+
+          if username in users_data["ADVANCED_HW_USERS_DS_LLM"]["users"]:
+
+            cpu_limit = users_data["ADVANCED_HW_USERS_DS"]["resources"]["cpu_limit"]
+            mem_limit = users_data["ADVANCED_HW_USERS_DS"]["resources"]["mem_limit"]
+            cpu_guarantee = users_data["ADVANCED_HW_USERS_DS"]["resources"]["cpu_guarantee"]
+            mem_guarantee = users_data["ADVANCED_HW_USERS_DS"]["resources"]["mem_guarantee"]
+            
+            spawner.profile_list.extend([
+              {
+                'display_name': 'Data Science environment with LLM',
+                'description': f'All libraries for Data Science courses with AI assistant: {cpu_limit} CPU / {mem_limit} RAM.',
+                'slug': 'datascience-environment-adv-llm',
+                'kubespawner_override':
+                  {
+                    'image': '<CR_NAME>/<CR_ID>/<DOCKER_IMAGE_LLM_NAME>:<DOCKER_IMAGE_LLM_TAG>',
+                    'cpu_limit': cpu_limit,
+                    'cpu_guarantee': cpu_guarantee,
+                    'mem_limit': mem_limit,
+                    'mem_guarantee': mem_guarantee
+                  }
+              }
+            ])
+
+            spawner.profile_list = list({x['display_name']:x for x in spawner.profile_list}.values())
+            spawner.log.info(f'Spawning sever for {username} with advanced configuration option')
+
+          # Data Science advanced hardware
+
+          if username in users_data["ADVANCED_HW_USERS_DS"]["users"]:
+
+            cpu_limit = users_data["ADVANCED_HW_USERS_DS"]["resources"]["cpu_limit"]
+            mem_limit = users_data["ADVANCED_HW_USERS_DS"]["resources"]["mem_limit"]
+            cpu_guarantee = users_data["ADVANCED_HW_USERS_DS"]["resources"]["cpu_guarantee"]
+            mem_guarantee = users_data["ADVANCED_HW_USERS_DS"]["resources"]["mem_guarantee"]
+            
+            spawner.profile_list.extend([
+              {
+                'display_name': 'DataScience environment (advanced)',
+                'description': f'All libraries for MiBA courses and labs with advanced hardware: {cpu_limit} CPU / {mem_limit} RAM.',
+                'slug': 'datascience-environment-adv',
+                'kubespawner_override':
+                  {
+                    'image': '<CR_NAME>/<CR_ID>/<DOCKER_IMAGE_DSAI_NAME>:<DOCKER_IMAGE_DSAI_TAG>',
+                    'cpu_limit': cpu_limit,
+                    'cpu_guarantee': cpu_guarantee,
+                    'mem_limit': mem_limit,
+                    'mem_guarantee': mem_guarantee
+                  }
+              }
+            ])
+
+            spawner.profile_list = list({x['display_name']:x for x in spawner.profile_list}.values())
+            spawner.log.info(f'Spawning sever for {username} with advanced configuration option')
+          
+          # Spark advanced hardware
+
+          if username in users_data["ADVANCED_HW_USERS_SPARK"]["users"]:
+            
+            cpu_limit = users_data["ADVANCED_HW_USERS_SPARK"]["resources"]["cpu_limit"]
+            mem_limit = users_data["ADVANCED_HW_USERS_SPARK"]["resources"]["mem_limit"]
+            cpu_guarantee = users_data["ADVANCED_HW_USERS_SPARK"]["resources"]["cpu_guarantee"]
+            mem_guarantee = users_data["ADVANCED_HW_USERS_SPARK"]["resources"]["mem_guarantee"]
+            
+            spawner.profile_list.extend([
+              {
+                'display_name': 'Spark environment (advanced)',
+                'description': f'Jupyter and PySpark image with S3 access with advanced hardware: {cpu_limit} CPU / {mem_limit} RAM.',
+                'slug': 'spark-environment-adv',
+                'kubespawner_override':
+                  {
+                    'image': '<CR_NAME>/<CR_ID>/<DOCKER_IMAGE_SPARK_NAME>:<DOCKER_IMAGE_SPARK_TAG>',
+                    'cpu_limit': cpu_limit,
+                    'cpu_guarantee': cpu_guarantee,
+                    'mem_limit': mem_limit,
+                    'mem_guarantee': mem_guarantee
+                  }
+              }
+            ])
+
+            spawner.profile_list = list({x['display_name']:x for x in spawner.profile_list}.values())
+            spawner.log.info(f'Spawning sever for {username} with advanced configuration option')
+
+          # GPU advanced hardware
+
+          if username in users_data["ADVANCED_HW_USERS_GPU"]["users"]:
+
+            cpu_limit = 8
+            mem_limit = '40G'
+            cpu_guarantee = 4
+            mem_guarantee = '20G'
+            
+            spawner.profile_list.extend([
+              {
+                'display_name': 'GPU environment (advanced)',
+                'description': f'GPU  test hardware: 1 GPU / {cpu_limit} CPU / {mem_limit} RAM.',
+                'slug': 'gpu-environment-adv',
+                'kubespawner_override':
+                  {
+                    'image': '<CR_NAME>/<CR_ID>/<DOCKER_IMAGE_DSAI_GPU_NAME>:<DOCKER_IMAGE_DSAI_GPU_TAG>',
+                    'cpu_limit': cpu_limit,
+                    'cpu_guarantee': cpu_guarantee,
+                    'mem_limit': mem_limit,
+                    'mem_guarantee': mem_guarantee,
+                    'extra_resource_limits': {'nvidia.com/gpu': '1'},
+                    'node_selector': {'NODETYPE': 'GPU'}
+                  }
+              }
+            ])
+            
+            spawner.profile_list = list({x['display_name']:x for x in spawner.profile_list}.values())
+            spawner.log.info(f"Spawning sever for {username} with advanced configuration option")
+
+        except Exception as e:
+          spawner.log.info(f'Exception in user {username} advanced configuration option: ' + str(e))
+          pass
+
+        return spawner._options_form_default()
+
+
+      c.KubeSpawner.options_form = miba_options_form
+     
+
+      # ==== (3) Extra folders mount for users ======
+     
+
+      from kubespawner.utils import get_k8s_model
+      from kubernetes_asyncio import client
+      from kubernetes_asyncio.client.models import (V1Volume, V1VolumeMount)
+      
+
+      mnt_data = {
+        'name': 'jupyterhub-data',
+        'pvc': 'jupyterhub-data-pvc',
+        'mountPath': '/home/jovyan/__DATA'
+      }
+      data_folder_users = <DATA_FOLDER_USERS>
+
+
+      def modify_pod_hook(spawner, pod):
+        try:
+
+          users_data = json_from_bucket(
+            bucket_name="<SMB_BUCKET_NAME>",
+            object_key="<SMB_FILE_KEY>",
+            access_key="<SMB_AWS_ACCESS_KEY_ID>",
+            secret_key="<SMB_AWS_SECRET_ACCESS_KEY>"
+          )
+
+          # mount DATA folder
+
+          user = spawner.user.name
+          read_only_flag = False if (user in data_folder_users) else True
+          pod.spec.volumes.append(
+            get_k8s_model(V1Volume, {
+              'name' : mnt_data['name'],
+              'persistentVolumeClaim': {
+                'claimName': mnt_data['pvc']
+              }
+            })
+          )
+          pod.spec.containers[0].volume_mounts.append(
+            get_k8s_model(V1VolumeMount, {
+                'name' : mnt_data['name'],
+                'mountPath' : mnt_data['mountPath'],
+                'readOnly': read_only_flag
+            })
+          )
+          
+          # mount PROJECTS folders
+
+          for prj in users_data["DATA_PROJECTS_USERS"]:
+            if user in prj['users']:
+              pod.spec.volumes.append(
+                get_k8s_model(V1Volume, {
+                  'name' : 'jupyterhub-{}-data'.format(prj['name']),
+                  'persistentVolumeClaim': {
+                    'claimName': 'jupyterhub-{}-data-pvc'.format(prj['name'])
+                  }
+                })
+              )
+              pod.spec.containers[0].volume_mounts.append(
+                get_k8s_model(V1VolumeMount, {
+                  'name' : 'jupyterhub-{}-data'.format(prj['name']),
+                  'mountPath' : '/home/jovyan/{}'.format(prj['path']),
+                  'readOnly': False
+                })
+              )
+
+        except Exception as e:
+          spawner.log.info('Exception in shared-mounts: ' + str(e))
+          pass
+
+        return pod
+      
+
+      c.KubeSpawner.modify_pod_hook = modify_pod_hook
+      
+
+      # =============================================
+      # =========== END OF CUSTOM CONFIG ============
+      # =============================================
