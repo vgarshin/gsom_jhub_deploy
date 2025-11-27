@@ -1,0 +1,48 @@
+image: dtzar/helm-kubectl
+
+stages:
+  - test
+  - deploy
+
+before_script:
+  # Install yc
+  - curl https://storage.yandexcloud.net/yandexcloud-yc/install.sh | /bin/bash
+  - echo ${config} | base64 -d > /root/.config/yandex-cloud/config.yaml
+  - ln -s /root/yandex-cloud/bin/yc /usr/bin/yc
+
+  # Helm repos
+  - helm repo add jupyterhub https://jupyterhub.github.io/helm-chart/ 
+  - helm repo update
+
+test-helm-chart:
+  stage: test
+  script:
+    - helm dependency build helm/jupyterhub
+    - helm lint helm/jupyterhub
+  tags:
+    - local
+
+deploy-staging:
+  stage: deploy
+  variables:
+    RELEASE: jhubtest
+    NAMESPACE: jhubtest
+    VERSION: "4.0.0"
+  script:
+    # Kubeconfig
+    - mkdir -p /root/.kube
+    - echo ${kubeconfig} | base64 -d > ${CONFIG}
+    - chmod 600 ${CONFIG}
+
+    # JHub, Gradeservice PVC/SC
+    - kubectl apply -f s3mountya/s3jhubsharedpvc.yaml -f s3mountya/s3jhubdatapvc.yaml
+    - kubectl apply -f gradeservice/storageclass.yaml -f gradeservice/gradeservice-pvc.yaml
+
+    # Deploy
+    - kubectl apply -f gradeservice/gradeservice-secrets.yaml -f gradeservice/gradeservice.yaml -n jhubtest
+    - cd helm/jupyterhub && ./installjhub.sh
+  when: manual
+  tags:
+    - local
+  only:
+    - test
