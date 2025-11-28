@@ -11,7 +11,7 @@ data:
     kubectl get node -n jhub | while read s; do
       ws=($s)
       if [[ ${ws[0]} != NAME ]]; then
-        np=$(kubectl get pods -o wide -n jhub | grep ${ws[0]} | wc -l)
+        np=$(kubectl get pods -o wide -n jhub | grep ${ws[0]} | grep -v hubdrain-cronjob | wc -l)
         npup=$(kubectl get pods -o wide -n jhub | grep ${ws[0]} | grep -o 'user-placeholder' | wc -l)
         if [[ $((${np}-${npup})) > 1 ]]; then
           echo $(date) - node ${ws[0]} has $((${np}-${npup})) podes in jhub namespace

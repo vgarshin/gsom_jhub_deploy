@@ -1,3 +1,13 @@
+# =============================================================================
+# JUPYTERHUB KUBERNETES CONFIGURATION
+# 
+# This configuration deploys JupyterHub on Kubernetes with multiple user
+# profiles and authentication providers.
+#
+# Security Note: Sensitive values are managed through side file with 
+# credentials that are copied to configuration during deploy stage.
+# =============================================================================
+
 proxy:
   secretToken: "<SECRET_TOKEN>"
   # chp relates to the proxy pod, which is responsible for routing traffic based
@@ -25,6 +35,26 @@ proxy:
 
 scheduling:
   # ==========================================
+  # These settings influence the core pods like the hub, proxy and user-scheduler pods.
+  # Decide if core pods ignore, prefer or require to schedule 
+  # on nodes with this label `hub.jupyter.org/node-purpose=core`
+  #corePods:
+    #nodeAffinity:
+      #matchNodePurpose: require  
+  # ==========================================
+  # If we add a taint to all the nodes in the node pool, and a toleration on the user pods
+  # to tolerate being scheduled on a tainted node, we have practically dedicated the node pool
+  # to be used only by user pods
+  #userPods:
+    #nodeAffinity:
+      # matchNodePurpose valid options:
+      # - ignore
+      # - prefer (the default)
+      # - require
+      # Decide if user pods ignore, prefer or require to schedule 
+      # on nodes with this label: `hub.jupyter.org/node-purpose=user`
+      #matchNodePurpose: require
+  # ==========================================
   # This priority mechanism allows us to add dummy users or user-placeholders 
   # with low priority that can take up resources until a real user with 
   # (higher priority) requires it
@@ -44,18 +74,6 @@ scheduling:
   # The user scheduler’s only task is to schedule new user pods to the most utilized node
   userScheduler:
     enabled: true
-  # ==========================================
-  # If we add a taint to all the nodes in the node pool, and a toleration on the user pods 
-  # to tolerate being scheduled on a tainted node, we have practically dedicated the node pool 
-  # to be used only by user pods
-  #scheduling:
-  #  userPods:
-  #    nodeAffinity:
-  #      matchNodePurpose valid options:
-  #        - ignore
-  #        - prefer (the default)
-  #        - require
-  #      matchNodePurpose: require
   # ==========================================
   # With the hook-image-puller enabled (the default), the user images being introduced 
   # will be pulled to the nodes before the hub pod is updated to utilize the new image.
@@ -112,14 +130,14 @@ singleuser:
   # databases credentials
   extraEnv:
     JUPYTERHUB_HOST_NAME: "<HOST_NAME>"
-  #  CLICKHOUSE_USER: "<CLICKHOUSE_LOGIN>"
-  #  CLICKHOUSE_PASSWORD: "<CLICKHOUSE_PASSWORD>"
+    #CLICKHOUSE_USER: "<CLICKHOUSE_LOGIN>"
+    #CLICKHOUSE_PASSWORD: "<CLICKHOUSE_PASSWORD>"
     POSTGRESQL_USER: "<POSTGRESQL_LOGIN>"
     POSTGRESQL_PASSWORD: "<POSTGRESQL_PASSWORD>"
   # ------------------------------------------
   # enables JupyterLab with sudo access for users
-  #  GRANT_SUDO: "yes"
-  #  NOTEBOOK_ARGS: "--allow-root"
+    #GRANT_SUDO: "yes"
+    #NOTEBOOK_ARGS: "--allow-root"
   #uid: 0
   #cmd: start-singleuser.sh
   # ------------------------------------------
@@ -139,11 +157,11 @@ singleuser:
   # ==========================================
   # 3 users per node config
   #cpu:
-  #  limit: 5
-  #  guarantee: 4
+    #limit: 5
+    #guarantee: 4
   #memory:
-  #  limit: 18G
-  #  guarantee: 16G
+    #limit: 18G
+    #guarantee: 16G
   # ==========================================
   image:
     name: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_DSAI_NAME>
@@ -262,10 +280,10 @@ singleuser:
         image: <CR_NAME>/<CR_ID>/<DOCKER_IMAGE_CPP_NAME>:<DOCKER_IMAGE_CPP_TAG>
 # ==========================================
 # Hadoop client image
-#    - display_name: "Hadoop environment"
-#      description: "HDFS client for Hadoop cluster access."
-#      kubespawner_override:
-#        image: <CR_NAME_2>/<DOCKER_IMAGE_HDP_2_NAME>:<DOCKER_IMAGE_HDP_2_TAG>
+    #- display_name: "Hadoop environment"
+      #description: "HDFS client for Hadoop cluster access."
+      #kubespawner_override:
+        #image: <CR_NAME_2>/<DOCKER_IMAGE_HDP_2_NAME>:<DOCKER_IMAGE_HDP_2_TAG>
 # ==========================================
   storage:
     capacity: 12Gi
@@ -341,7 +359,12 @@ hub:
 
 
       class SimbaAzureAdOAuthenticator(AzureAdOAuthenticator):
+
         def normalize_username(self, username):
+          """
+          Normalizes usernames taken from email addresses.
+
+          """
           username = username.split('@')[0]
           username = username.lower()
           username = re.sub('[^0-9a-zA-Z]+', '', username)
@@ -350,29 +373,44 @@ hub:
 
 
       class SimbaYaOAuthenticator(OAuthenticator):
+
         def user_info_to_username(self, user_info):
+          """
+          Normalizes usernames taken from email addresses.
+          Map user info to Hub username, with use of 
+          external database of user mapping.
+
+          """
           if callable(self.username_claim):
               username = self.username_claim(user_info)
           else:
               username = user_info.get(self.username_claim, None)
+          
           if not username:
               message = (
                   f'No {self.username_claim} found in {user_info}. Maybe the hub needs to be configured to request more scopes?',
               )
               self.log.error(message)
               raise ValueError(message)
+          
           db_dict = <DB_USERS_02>
           pfxusername = '<CLIENT_02_PREFIX>' + username
           pfxusername = pfxusername.lower()
           pfxusername = re.sub('[^0-9a-zA-Z]+', '', pfxusername)
+          
           if db_dict:
             return db_dict[pfxusername] if pfxusername in db_dict.keys() else pfxusername
           else:
             return pfxusername
 
 
-      # Based on https://github.com/jupyterhub/oauthenticator/issues/136
       class MultiOAuthenticator(Authenticator):
+        """
+        Implements many authenticators with custon design.
+
+        Based on: https://github.com/jupyterhub/oauthenticator/issues/136.
+
+        """
         authenticators = List(help='Authenticators to use', config=True)
 
         def __init__(self, *arg, **kwargs):
@@ -493,14 +531,14 @@ hub:
         Reads users.json file from Yandex Cloud S3 bucket and returns as Python object
         
         Args:
-            bucket_name (str): Bucket name
-            object_key (str): Object key (file path)
-            access_key (str): Access Key ID
-            secret_key (str): Secret Access Key
-            region (str): Bucket region
+          bucket_name (str): Bucket name
+          object_key (str): Object key (file path)
+          access_key (str): Access Key ID
+          secret_key (str): Secret Access Key
+          region (str): Bucket region
         
         Returns:
-            dict/list: Parsed JSON object or None in case of error
+          dict/list: Parsed JSON object or None in case of error
             
         """
         method = 'GET'
@@ -525,11 +563,11 @@ hub:
 
         
         def sign(key, msg):
-            """
-            Signature calculation.
-            
-            """
-            return hmac.new(key, msg.encode('utf-8'), hashlib.sha256).digest()
+          """
+          Signature calculation.
+          
+          """
+          return hmac.new(key, msg.encode('utf-8'), hashlib.sha256).digest()
 
         
         k_date = sign(('AWS4' + secret_key).encode('utf-8'), date_stamp)
@@ -540,34 +578,42 @@ hub:
         
         authorization_header = f'{algorithm} Credential={access_key}/{credential_scope}, SignedHeaders={signed_headers}, Signature={signature}'
         headers = {
-            'Host': host,
-            'x-amz-date': amz_date,
-            'x-amz-content-sha256': payload_hash,
-            'Authorization': authorization_header
+          'Host': host,
+          'x-amz-date': amz_date,
+          'x-amz-content-sha256': payload_hash,
+          'Authorization': authorization_header
         }
         url = f'https://{host}{canonical_uri}'
         
         try:
-            response = requests.get(url, headers=headers)
-            response.raise_for_status()
-            json_data = json.loads(response.text)
-            return json_data
+          response = requests.get(url, headers=headers)
+          response.raise_for_status()
+          json_data = json.loads(response.text)
+          return json_data
             
         except json.JSONDecodeError as e:
-            print(f"JSON parsing error: {e}")
-            print(f"Received text: {response.text[:100]}...")
-            return None
+          print(f"JSON parsing error: {e}")
+          print(f"Received text: {response.text[:100]}...")
+          return None
             
         except requests.exceptions.RequestException as e:
-            print(f"Error reading file: {e}")
-            if hasattr(e, 'response') and e.response is not None:
-                print(f"Status code: {e.response.status_code}")
-                print(f"Response: {e.response.text[:500]}...")
-            return None
+          print(f"Error reading file: {e}")
+          if hasattr(e, 'response') and e.response is not None:
+            print(f"Status code: {e.response.status_code}")
+            print(f"Response: {e.response.text[:500]}...")
+          return None
 
-
-      # advanced instances for selected users (option 1)
+      
       async def miba_options_form(spawner):
+        """
+        Advanced instances for selected users.
+        Reads data on users from config file in
+        a S3 bucket.
+
+        Data on users contains info about hardware
+        requirements by the group of users.
+
+        """
         username = spawner.user.name
 
         users_data = json_from_bucket(
@@ -667,11 +713,11 @@ hub:
 
           if username in users_data["ADVANCED_HW_USERS_GPU"]["users"]:
 
-            cpu_limit = 8
-            mem_limit = '40G'
-            cpu_guarantee = 4
-            mem_guarantee = '20G'
-            
+            cpu_limit = users_data["ADVANCED_HW_USERS_GPU"]["resources"]["cpu_limit"]
+            mem_limit = users_data["ADVANCED_HW_USERS_GPU"]["resources"]["mem_limit"]
+            cpu_guarantee = users_data["ADVANCED_HW_USERS_GPU"]["resources"]["cpu_guarantee"]
+            mem_guarantee = users_data["ADVANCED_HW_USERS_GPU"]["resources"]["mem_guarantee"]
+
             spawner.profile_list.extend([
               {
                 'display_name': 'GPU environment (advanced)',
@@ -711,15 +757,16 @@ hub:
       from kubernetes_asyncio.client.models import (V1Volume, V1VolumeMount)
       
 
-      mnt_data = {
-        'name': 'jupyterhub-data',
-        'pvc': 'jupyterhub-data-pvc',
-        'mountPath': '/home/jovyan/__DATA'
-      }
-      data_folder_users = <DATA_FOLDER_USERS>
-
-
       def modify_pod_hook(spawner, pod):
+        """
+        Mounts object storage buckets mounts for users.
+        Reads data on users from config file in
+        a S3 bucket.
+
+        Data on users contains info about PVC to mount 
+        to user pod by the group of users.
+
+        """
         try:
 
           users_data = json_from_bucket(
@@ -731,8 +778,15 @@ hub:
 
           # mount DATA folder
 
+          data_folder_users = users_data["DATA_FOLDER_USERS"]
+          mnt_data = {
+            'name': 'jupyterhub-data',
+            'pvc': 'jupyterhub-data-pvc',
+            'mountPath': '/home/jovyan/__DATA'
+          }
           user = spawner.user.name
           read_only_flag = False if (user in data_folder_users) else True
+          
           pod.spec.volumes.append(
             get_k8s_model(V1Volume, {
               'name' : mnt_data['name'],
@@ -741,6 +795,7 @@ hub:
               }
             })
           )
+          
           pod.spec.containers[0].volume_mounts.append(
             get_k8s_model(V1VolumeMount, {
                 'name' : mnt_data['name'],
@@ -753,6 +808,7 @@ hub:
 
           for prj in users_data["DATA_PROJECTS_USERS"]:
             if user in prj['users']:
+              
               pod.spec.volumes.append(
                 get_k8s_model(V1Volume, {
                   'name' : 'jupyterhub-{}-data'.format(prj['name']),
@@ -761,6 +817,7 @@ hub:
                   }
                 })
               )
+              
               pod.spec.containers[0].volume_mounts.append(
                 get_k8s_model(V1VolumeMount, {
                   'name' : 'jupyterhub-{}-data'.format(prj['name']),

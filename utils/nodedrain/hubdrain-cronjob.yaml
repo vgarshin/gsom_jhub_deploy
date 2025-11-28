@@ -9,13 +9,13 @@ spec:
   #schedule: "*/10 * * * *"  # every 10 minutes for test only
   jobTemplate:
     spec:
-      ttlSecondsAfterFinished: 300  # remove pod 5 min after finishing
+      ttlSecondsAfterFinished: 900  # remove pod 15 min after finishing
       template:
         spec:
           serviceAccountName: hubdrain-serviceaccount
           containers:
           - name: hubdrain
-            image: bitnami/kubectl:latest
+            image: dtzar/helm-kubectl
             command: ["/bin/bash", "/scripts/hubdrain.sh"]
             volumeMounts:
             - name: hubdrain-script

@@ -7,11 +7,11 @@ stages:
 before_script:
   # Install yc
   - curl https://storage.yandexcloud.net/yandexcloud-yc/install.sh | /bin/bash
-  - echo ${config} | base64 -d > /root/.config/yandex-cloud/config.yaml
+  - cat ${YC_CONFIG} > /root/.config/yandex-cloud/config.yaml
   - ln -s /root/yandex-cloud/bin/yc /usr/bin/yc
 
-  # Helm repos
-  - helm repo add jupyterhub https://jupyterhub.github.io/helm-chart/ 
+  # Helm repo manage
+  - helm repo add jupyterhub https://jupyterhub.github.io/helm-chart/
   - helm repo update
 
 test-helm-chart:
@@ -20,29 +20,66 @@ test-helm-chart:
     - helm dependency build helm/jupyterhub
     - helm lint helm/jupyterhub
   tags:
-    - local
+    - docker
 
-deploy-staging:
+deploy-jhub:
   stage: deploy
   variables:
-    RELEASE: jhubtest
-    NAMESPACE: jhubtest
-    VERSION: "4.0.0"
+    RELEASE: jhub
+    NAMESPACE: jhub
+    JHVER: "4.0.0"
+    KUBE_CONFIG_FILE: "/root/.kube/config"
   script:
-    # Kubeconfig
+    # Kubeconfig setup
     - mkdir -p /root/.kube
-    - echo ${kubeconfig} | base64 -d > ${CONFIG}
-    - chmod 600 ${CONFIG}
+    - cat ${KUBE_CONFIG} > ${KUBE_CONFIG_FILE}
+    - chmod 600 ${KUBE_CONFIG_FILE}
 
-    # JHub, Gradeservice PVC/SC
-    - kubectl apply -f s3mountya/s3jhubsharedpvc.yaml -f s3mountya/s3jhubdatapvc.yaml
-    - kubectl apply -f gradeservice/storageclass.yaml -f gradeservice/gradeservice-pvc.yaml
+    # PVC
+    #- kubectl apply -f s3mountya/s3jhubsharedpvc.yaml -f s3mountya/s3jhubdatapvc.yaml
+    #- kubectl apply -f gradeservice/storageclass.yaml -f gradeservice/gradeservice-pvc.yaml
 
-    # Deploy
-    - kubectl apply -f gradeservice/gradeservice-secrets.yaml -f gradeservice/gradeservice.yaml -n jhubtest
-    - cd helm/jupyterhub && ./installjhub.sh
+    # Gradeservice (if needed)
+    #- > 
+    #  kubectl apply
+    #  -f gradeservice/gradeservice-secrets.yaml 
+    #  -f gradeservice/gradeservice.yaml 
+    #  -n jhub
+
+    # Cronjobs for empty nodes drain
+    - >
+      kubectl apply 
+      -f utils/nodedrain/hubdrain-configmap.yaml
+      -f utils/nodedrain/hubdrain-rbac.yaml
+      -f utils/nodedrain/hubdrain-cronjob.yaml
+
+    # JupyterHub
+    - chmod +x helm/jupyterhub/upgradejhub.sh
+    - cd helm/jupyterhub && ./upgradejhub.sh
   when: manual
   tags:
-    - local
+    - docker
   only:
-    - test
+    - main
+
+deploy-pgdatabase:
+  stage: deploy
+  variables:
+    RELEASE: jhub
+    NAMESPACE: jhub
+    RELEASE_PG: mibapostgres
+    KUBE_CONFIG_FILE: "/root/.kube/config"
+  script:
+    # Kubeconfig setup
+    - mkdir -p /root/.kube
+    - cat ${KUBE_CONFIG} > ${KUBE_CONFIG_FILE}
+    - chmod 600 ${KUBE_CONFIG_FILE}
+
+    # Postgres demo (if needed)
+    - chmod +x mibapostgres/installmibapostgres.sh
+    - cd mibapostgres && ./installmibapostgres.sh
+  when: manual
+  tags:
+    - docker
+  only:
+    - main
